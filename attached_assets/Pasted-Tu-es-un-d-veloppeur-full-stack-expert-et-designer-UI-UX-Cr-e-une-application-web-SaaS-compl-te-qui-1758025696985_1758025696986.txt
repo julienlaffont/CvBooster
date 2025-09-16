@@ -1,0 +1,41 @@
+Tu es un développeur full-stack expert et designer UI/UX. Crée une application web SaaS complète qui aide les utilisateurs à améliorer leur CV et leurs lettres de motivation afin de décrocher des entretiens plus rapidement. L’application doit inclure :
+
+1. **Front-end (React) :**
+   - Landing page professionnelle avec :
+     - Présentation du produit et ses bénéfices.
+     - Call-to-action clair (“Améliore ton CV maintenant”).
+     - Sections fonctionnalités, témoignages, tarifs.
+   - Dashboard utilisateur :
+     - Upload ou création de CV.
+     - Rédaction ou amélioration de lettres de motivation.
+     - Section “Conseils personnalisés” avec suggestions de l’IA.
+   - Thème neutre et sombre, design moderne et fluide.
+   - Responsive design (mobile + desktop).
+   - Interface intuitive et accessible pour tous.
+
+2. **Back-end (Node.js + Express) :**
+   - API pour gérer les requêtes vers ChatGPT/OpenAI pour :
+     - Correction et amélioration de CV et lettres.
+     - Conseils personnalisés selon secteur et poste.
+   - Gestion des utilisateurs (inscription, connexion, récupération de données).
+   - Base de données sécurisée (MongoDB ou SQLite) pour stocker CV et lettres.
+
+3. **Intégration ChatGPT/OpenAI :**
+   - Chatbot intelligent pour guider l’utilisateur dans l’amélioration de ses documents.
+   - Suggestions contextuelles basées sur le poste et le secteur visé.
+   - Interface de chat simple et efficace.
+
+4. **Design et UX :**
+   - Typographie lisible et moderne.
+   - Palette de couleurs sobres et élégantes (tons sombres et neutres).
+   - Messages clairs et guidance étape par étape.
+
+5. **Déploiement :**
+   - Fournis toutes les instructions pour déployer l’application directement sur Replit.
+   - Inclure la configuration pour que l’API OpenAI fonctionne correctement avec le back-end.
+
+6. **Bonus :**
+   - Inclure un bouton “Exporter en PDF” pour les CV et lettres améliorés.
+   - Option pour sauvegarder plusieurs versions par utilisateur.
+
+**Objectif :** Créer un MVP fonctionnel, complet et esthétiquement professionnel, prêt à être testé par de vrais utilisateurs. Génère tout le code nécessaire et explique étape par étape comment le déployer sur Replit.
