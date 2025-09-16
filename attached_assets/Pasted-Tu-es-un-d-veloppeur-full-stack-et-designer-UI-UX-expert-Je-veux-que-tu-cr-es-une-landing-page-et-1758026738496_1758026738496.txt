@@ -1,0 +1,39 @@
+Tu es un développeur full-stack et designer UI/UX expert. Je veux que tu crées une **landing page et un dashboard SaaS épurés et professionnels**, avec les fonctionnalités suivantes :
+
+1. **Landing page (design neutre et sérieux) :**
+   - Couleurs sobres et neutres : blanc, noir, gris, nuances douces, pas de couleurs vives.
+   - Design minimaliste et élégant, très professionnel.
+   - Typographie lisible et moderne.
+   - Images et icônes sérieuses et crédibles (orientation professionnelle / corporate), pas de dessins fantaisistes.
+   - Présentation claire du produit avec sections :
+     - **Header** : titre clair + sous-titre qui explique le bénéfice (“Crée ton CV parfait grâce à l’IA et décroche des entretiens plus rapidement”).
+     - **Fonctionnalités** : création de CV, amélioration de lettres de motivation, conseils personnalisés.
+     - **Call-to-action (CTA)** : boutons visibles “Créer mon CV” ou “Améliorer ma lettre de motivation”.
+     - **Témoignages / avis** : espace pour mettre des témoignages ou retours utilisateurs.
+     - **Footer** : liens vers politique de confidentialité, contact, réseaux sociaux.
+
+2. **Dashboard / fonctionnalité principale :**
+   - Section “Création de CV avec IA” :
+     - L’utilisateur peut entrer ses informations personnelles (nom, expériences, compétences, formation, objectifs).
+     - L’IA génère un CV complet, professionnel et personnalisé.
+     - Option pour **donner des instructions à l’IA** : par exemple, “rends-le plus créatif” ou “plus formel”.
+     - Possibilité de télécharger le CV en PDF ou de le sauvegarder dans le compte utilisateur.
+   - Interface simple et intuitive, facilement accessible à tous.
+
+3. **Front-end :**
+   - React avec composants modernes et responsives.
+   - Design fluide et minimaliste.
+   - Navigation simple entre landing page et dashboard.
+
+4. **Back-end :**
+   - Node.js + Express.
+   - API intégrée pour ChatGPT/OpenAI pour générer et personnaliser les CV.
+   - Gestion des utilisateurs : inscription, connexion, sauvegarde des CV.
+   - Base de données sécurisée pour stocker les informations utilisateur.
+
+5. **Bonus / détails :**
+   - Boutons et messages clairs, guidance étape par étape.
+   - Interface professionnelle mais accueillante et facile à utiliser.
+   - Fournis toutes les instructions pour déployer sur Replit.
+
+**Objectif :** Créer une landing page épurée, sérieuse et professionnelle, avec un dashboard fonctionnel pour générer des CV personnalisés grâce à l’IA, accessible à tous et facilement utilisable. Génère tout le code front-end et back-end nécessaire.

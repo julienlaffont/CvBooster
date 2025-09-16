@@ -1,0 +1,48 @@
+Tu es un développeur full-stack expert et designer UI/UX. Crée une application web SaaS complète qui aide les utilisateurs à améliorer leurs CV et lettres de motivation afin de décrocher des entretiens plus rapidement. L’application doit inclure toutes les fonctionnalités et améliorations suivantes :
+
+1. **Landing page (professionnelle, sérieuse et épurée) :**
+   - Couleurs sobres et neutres : blanc, noir, gris, nuances douces, pas de couleurs vives.
+   - Design minimaliste, élégant, moderne et crédible.
+   - Typographie lisible et professionnelle.
+   - Images et icônes sérieuses, orientées corporate/professionnel.
+   - Sections :
+     - **Header** : titre clair + sous-titre (“Crée ton CV parfait grâce à l’IA et décroche des entretiens plus rapidement”).
+     - **Fonctionnalités** : création de CV, amélioration de lettres, conseils personnalisés.
+     - **Call-to-action** : boutons visibles “Créer mon CV” et “Améliorer ma lettre de motivation”.
+     - **Témoignages / avis** : espace pour retours utilisateurs.
+     - **Footer** : politique de confidentialité, contact, liens réseaux sociaux.
+
+2. **Dashboard / fonctionnalités principales :**
+   - **Amélioration de CV et lettres de motivation** : upload ou rédaction, correction et optimisation par IA.
+   - **Création de CV personnalisé avec IA** :
+     - L’utilisateur fournit ses informations (nom, expérience, compétences, formation, objectifs).
+     - L’IA génère un CV complet, professionnel, à son image.
+     - L’utilisateur peut donner des instructions à l’IA (“plus créatif”, “plus formel”, etc.).
+     - Téléchargement PDF ou sauvegarde des CV dans le compte utilisateur.
+   - Section “Conseils personnalisés” avec recommandations de l’IA selon le poste et secteur visé.
+   - Interface simple, intuitive et fluide pour tous.
+
+3. **Front-end :**
+   - React avec composants modernes et responsives.
+   - Navigation fluide entre landing page et dashboard.
+   - Design minimaliste et épuré, thème neutre et sérieux.
+
+4. **Back-end :**
+   - Node.js + Express.
+   - API intégrée pour ChatGPT/OpenAI pour générer et améliorer CV et lettres.
+   - Gestion sécurisée des utilisateurs : inscription, connexion, récupération et sauvegarde des données.
+   - Base de données sécurisée (MongoDB ou SQLite) pour stocker les informations utilisateurs.
+
+5. **Design et expérience utilisateur :**
+   - Interface épurée mais accueillante, guidance claire étape par étape.
+   - Boutons, messages et interactions clairs et professionnels.
+   - Palette de couleurs : blanc, gris, noir, tons neutres.
+   - Typographie lisible et moderne.
+
+6. **Bonus et déploiement :**
+   - Export PDF des CV et lettres.
+   - Option pour sauvegarder plusieurs versions.
+   - Instructions complètes pour déployer l’application directement sur Replit.
+   - Fournir le code complet front-end, back-end et instructions pour connecter l’API ChatGPT.
+
+**Objectif :** Créer un MVP complet, fonctionnel, esthétiquement professionnel et accessible à tous, intégrant la création de CV et lettres de motivation avec l’IA, une landing page sérieuse et épurée, et un dashboard fluide et intuitif.
