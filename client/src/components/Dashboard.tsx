@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 import { 
   FileText, 
   Plus, 
@@ -13,61 +14,143 @@ import {
   MessageSquare,
   Star,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from "lucide-react";
+import { 
+  useUser,
+  useDashboardStats,
+  useCvs,
+  useCoverLetters,
+  useUploadCv,
+  useUploadCoverLetter,
+  useAnalyzeCv,
+  useAnalyzeCoverLetter,
+  useDeleteCv,
+  useDeleteCoverLetter
+} from "@/lib/api";
 
-// TODO: Remove mock data - replace with real user data from API
-const mockDocuments = [
-  {
-    id: "1",
-    title: "CV Développeur Frontend",
-    type: "CV",
-    status: "Optimisé",
-    lastModified: "Il y a 2 heures",
-    score: 95,
-    suggestions: 2
-  },
-  {
-    id: "2", 
-    title: "Lettre - Google",
-    type: "Lettre",
-    status: "En cours",
-    lastModified: "Il y a 1 jour",
-    score: 78,
-    suggestions: 5
-  },
-  {
-    id: "3",
-    title: "CV Marketing Digital",
-    type: "CV",
-    status: "Brouillon",
-    lastModified: "Il y a 3 jours",
-    score: 65,
-    suggestions: 8
+// Helper function to format dates
+function formatDate(dateString: string | Date) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffMins < 60) {
+    return `Il y a ${diffMins} min`;
+  } else if (diffHours < 24) {
+    return `Il y a ${diffHours}h`;
+  } else {
+    return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
   }
-];
+}
 
-const recentActivity = [
-  "IA a analysé ton CV Développeur Frontend",
-  "Nouvelle suggestion pour la section Compétences",
-  "Export PDF généré avec succès",
-  "Lettre de motivation Google mise à jour"
-];
+// Helper function to get status in French
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'draft': return 'Brouillon';
+    case 'optimized': return 'Optimisé';
+    case 'analyzed': return 'Analysé';
+    default: return 'En cours';
+  }
+}
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState("documents");
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const { toast } = useToast();
+  
+  // API calls
+  const { data: user } = useUser();
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: cvs = [], isLoading: cvsLoading } = useCvs();
+  const { data: coverLetters = [], isLoading: lettersLoading } = useCoverLetters();
+  
+  // Mutations
+  const uploadCv = useUploadCv();
+  const uploadCoverLetter = useUploadCoverLetter();
+  const analyzeCv = useAnalyzeCv();
+  const analyzeCoverLetter = useAnalyzeCoverLetter();
+  const deleteCv = useDeleteCv();
+  const deleteCoverLetter = useDeleteCoverLetter();
 
-  const handleDocumentAction = (action: string, docId: string) => {
-    console.log(`${action} action on document ${docId}`);
+  const handleDocumentAction = async (action: string, docId: string, docType: 'CV' | 'Lettre') => {
+    try {
+      switch (action) {
+        case 'analyze':
+          if (docType === 'CV') {
+            await analyzeCv.mutateAsync(docId);
+            toast({ title: "Analyse terminée", description: "Votre CV a été analysé avec succès" });
+          } else {
+            await analyzeCoverLetter.mutateAsync(docId);
+            toast({ title: "Analyse terminée", description: "Votre lettre a été analysée avec succès" });
+          }
+          break;
+        case 'delete':
+          if (docType === 'CV') {
+            await deleteCv.mutateAsync(docId);
+            toast({ title: "CV supprimé", description: "Le CV a été supprimé avec succès" });
+          } else {
+            await deleteCoverLetter.mutateAsync(docId);
+            toast({ title: "Lettre supprimée", description: "La lettre a été supprimée avec succès" });
+          }
+          break;
+        case 'view':
+        case 'edit':
+        case 'download':
+          // TODO: Implement these actions
+          toast({ title: "À venir", description: `Fonction ${action} en cours de développement` });
+          break;
+      }
+    } catch (error: any) {
+      toast({ 
+        title: "Erreur", 
+        description: error.message || "Une erreur est survenue", 
+        variant: "destructive" 
+      });
+    }
   };
 
   const handleNewDocument = (type: string) => {
-    console.log(`Creating new ${type}`);
+    // TODO: Implement document creation
+    toast({ title: "À venir", description: `Création de ${type} en cours de développement` });
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingFile(true);
+    try {
+      // Detect document type based on filename or let user choose
+      const isCv = file.name.toLowerCase().includes('cv') || file.name.toLowerCase().includes('resume');
+      
+      if (isCv) {
+        await uploadCv.mutateAsync({ file });
+        toast({ title: "Success", description: "CV uploadé avec succès" });
+      } else {
+        await uploadCoverLetter.mutateAsync({ file });
+        toast({ title: "Success", description: "Lettre uploadée avec succès" });
+      }
+    } catch (error: any) {
+      toast({ 
+        title: "Erreur d'upload", 
+        description: error.message || "Erreur lors de l'upload du fichier", 
+        variant: "destructive" 
+      });
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    const frenchStatus = getStatusLabel(status);
+    switch (frenchStatus) {
       case "Optimisé": return "text-green-500";
+      case "Analysé": return "text-blue-500";
       case "En cours": return "text-yellow-500";
       case "Brouillon": return "text-muted-foreground";
       default: return "text-muted-foreground";
@@ -80,6 +163,30 @@ export function Dashboard() {
     return "text-red-500";
   };
 
+  // Combine CVs and cover letters for display
+  const allDocuments = [
+    ...cvs.map(cv => ({
+      id: cv.id,
+      title: cv.title,
+      type: 'CV',
+      status: cv.status || 'draft',
+      lastModified: formatDate(cv.updatedAt || cv.createdAt || new Date()),
+      score: cv.score || 0,
+      suggestions: Array.isArray(cv.suggestions) ? cv.suggestions.length : 0
+    })),
+    ...coverLetters.map(letter => ({
+      id: letter.id,
+      title: letter.title,
+      type: 'Lettre',
+      status: letter.status || 'draft',
+      lastModified: formatDate(letter.updatedAt || letter.createdAt || new Date()),
+      score: letter.score || 0,
+      suggestions: Array.isArray(letter.suggestions) ? letter.suggestions.length : 0
+    }))
+  ];
+
+  const isLoading = statsLoading || cvsLoading || lettersLoading;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Dashboard Header */}
@@ -90,12 +197,12 @@ export function Dashboard() {
               <Avatar className="h-12 w-12">
                 <AvatarImage src="" />
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  JD
+                  {user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h1 className="text-2xl font-bold" data-testid="text-welcome">
-                  Salut Jean ! 👋
+                  Salut {user?.name || 'Utilisateur'} ! 👋
                 </h1>
                 <p className="text-muted-foreground">
                   Prêt à booster tes candidatures aujourd'hui ?
@@ -136,7 +243,9 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Documents</p>
-                      <p className="text-2xl font-bold">3</p>
+                      <p className="text-2xl font-bold">
+                        {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats?.documents || 0}
+                      </p>
                     </div>
                     <FileText className="h-8 w-8 text-primary/60" />
                   </div>
@@ -147,7 +256,9 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Score Moyen</p>
-                      <p className="text-2xl font-bold text-yellow-500">79</p>
+                      <p className={`text-2xl font-bold ${getScoreColor(stats?.averageScore || 0)}`}>
+                        {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats?.averageScore || 0}
+                      </p>
                     </div>
                     <Star className="h-8 w-8 text-primary/60" />
                   </div>
@@ -158,7 +269,9 @@ export function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Suggestions</p>
-                      <p className="text-2xl font-bold text-blue-500">15</p>
+                      <p className="text-2xl font-bold text-blue-500">
+                        {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats?.totalSuggestions || 0}
+                      </p>
                     </div>
                     <MessageSquare className="h-8 w-8 text-primary/60" />
                   </div>
@@ -171,14 +284,36 @@ export function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   Mes Documents
-                  <Button variant="ghost" size="sm" data-testid="button-upload">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Importer
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={handleFileUpload}
+                      style={{ display: 'none' }}
+                      id="file-upload"
+                      disabled={uploadingFile}
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      data-testid="button-upload"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                      disabled={uploadingFile}
+                    >
+                      {uploadingFile ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                      Importer
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockDocuments.map((doc, index) => (
+                {isLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <span className="ml-2 text-muted-foreground">Chargement des documents...</span>
+                  </div>
+                )}
+                {!isLoading && allDocuments.map((doc, index) => (
                   <div 
                     key={doc.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover-elevate transition-all"
@@ -197,7 +332,7 @@ export function Dashboard() {
                             {doc.type}
                           </Badge>
                           <span className={getStatusColor(doc.status)}>
-                            {doc.status}
+                            {getStatusLabel(doc.status)}
                           </span>
                           <span>{doc.lastModified}</span>
                         </div>
@@ -217,7 +352,18 @@ export function Dashboard() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => handleDocumentAction("view", doc.id)}
+                          onClick={() => handleDocumentAction("analyze", doc.id, doc.type as 'CV' | 'Lettre')}
+                          disabled={analyzeCv.isPending || analyzeCoverLetter.isPending}
+                          data-testid={`button-analyze-${index}`}
+                        >
+                          {(analyzeCv.isPending || analyzeCoverLetter.isPending) ? 
+                            <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />
+                          }
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDocumentAction("view", doc.id, doc.type as 'CV' | 'Lettre')}
                           data-testid={`button-view-${index}`}
                         >
                           <Eye className="h-4 w-4" />
@@ -225,7 +371,7 @@ export function Dashboard() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => handleDocumentAction("edit", doc.id)}
+                          onClick={() => handleDocumentAction("edit", doc.id, doc.type as 'CV' | 'Lettre')}
                           data-testid={`button-edit-${index}`}
                         >
                           <Edit className="h-4 w-4" />
@@ -233,7 +379,7 @@ export function Dashboard() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => handleDocumentAction("download", doc.id)}
+                          onClick={() => handleDocumentAction("download", doc.id, doc.type as 'CV' | 'Lettre')}
                           data-testid={`button-download-${index}`}
                         >
                           <Download className="h-4 w-4" />
@@ -243,11 +389,11 @@ export function Dashboard() {
                   </div>
                 ))}
                 
-                {mockDocuments.length === 0 && (
+                {!isLoading && allDocuments.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Aucun document pour le moment</p>
-                    <p className="text-sm">Commence par créer ton premier CV !</p>
+                    <p className="text-sm">Commence par créer ton premier CV ou importer un fichier !</p>
                   </div>
                 )}
               </CardContent>
@@ -283,14 +429,18 @@ export function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3 text-sm">
+                {/* Recent activity based on real data */}
+                {allDocuments.slice(0, 4).map((doc, index) => (
+                  <div key={doc.id} className="flex items-start gap-3 text-sm">
                     <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                     <span className="text-muted-foreground" data-testid={`text-activity-${index}`}>
-                      {activity}
+                      {doc.type} "{doc.title}" mis à jour {doc.lastModified}
                     </span>
                   </div>
                 ))}
+                {allDocuments.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Aucune activité récente</p>
+                )}
               </CardContent>
             </Card>
 

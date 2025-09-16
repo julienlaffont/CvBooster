@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { Send, Bot, User, Loader2 } from "lucide-react";
+import { 
+  useConversations,
+  useCreateConversation,
+  useConversationMessages,
+  useSendMessage
+} from "@/lib/api";
 
 interface Message {
   id: string;

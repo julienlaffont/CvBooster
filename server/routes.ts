@@ -1,6 +1,7 @@
 // Based on javascript_log_in_with_replit blueprint and custom API routes
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { analyzeCv, analyzeCoverLetter, chatWithAI, generateCoverLetter } from "./openai";
@@ -13,6 +14,36 @@ import {
   updateCvSchema,
   updateCoverLetterSchema 
 } from "@shared/schema";
+
+// File upload configuration
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept PDF, DOC, DOCX, and TXT files
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Type de fichier non supporté. Utilisez PDF, DOC, DOCX ou TXT.'));
+    }
+  }
+});
+
+// Text extraction function
+function extractTextFromFile(file: Express.Multer.File): string {
+  // For now, we'll handle text files directly
+  // For PDF/DOC files, we'd need additional libraries (pdf-parse, mammoth, etc.)
+  if (file.mimetype === 'text/plain') {
+    return file.buffer.toString('utf-8');
+  }
+  
+  // For PDF/DOC files, return a placeholder for now
+  // In a real implementation, you'd use libraries to extract text
+  return `[Contenu extracté du fichier: ${file.originalname}]\n\nVeuillez copier-coller le contenu de votre CV ici pour une analyse complète.`;
+}
 
 // Validation middleware
 function validateBody(schema: z.ZodSchema) {
@@ -39,6 +70,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // File Upload Routes
+  app.post('/api/upload/cv', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucun fichier uploadé' });
+      }
+
+      const userId = req.user.claims.sub;
+      const { title, sector, position } = req.body;
+      
+      // Extract text content from file
+      const content = extractTextFromFile(req.file);
+      
+      // Create CV with extracted content
+      const cv = await storage.createCv({
+        userId,
+        title: title || req.file.originalname,
+        content,
+        sector,
+        position,
+        status: 'draft'
+      });
+      
+      res.status(201).json({ cv, message: 'CV uploadé avec succès' });
+    } catch (error: any) {
+      console.error('Error uploading CV:', error);
+      if (error.message.includes('Type de fichier')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Erreur lors de l\'upload du CV' });
+    }
+  });
+
+  app.post('/api/upload/cover-letter', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucun fichier uploadé' });
+      }
+
+      const userId = req.user.claims.sub;
+      const { title, companyName, position, sector } = req.body;
+      
+      // Extract text content from file
+      const content = extractTextFromFile(req.file);
+      
+      // Create cover letter with extracted content
+      const letter = await storage.createCoverLetter({
+        userId,
+        title: title || req.file.originalname,
+        content,
+        companyName,
+        position,
+        sector,
+        status: 'draft'
+      });
+      
+      res.status(201).json({ letter, message: 'Lettre uploadée avec succès' });
+    } catch (error: any) {
+      console.error('Error uploading cover letter:', error);
+      if (error.message.includes('Type de fichier')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Erreur lors de l\'upload de la lettre' });
     }
   });
 
