@@ -201,7 +201,7 @@ export function useGenerateCoverLetter() {
       jobDescription?: string;
       sector?: string;
     }) => {
-      const res = await apiRequest('POST', '/api/cover-letters/generate', data);
+      const res = await apiRequest('POST', '/api/cover-letters/generate-from-cv', data);
       return await res.json();
     },
     onSuccess: () => {

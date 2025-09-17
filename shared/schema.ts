@@ -123,12 +123,14 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 // Schema types for insertion
 export const insertCvSchema = createInsertSchema(cvs).omit({
   id: true,
+  userId: true, // Automatically injected by backend from session
   createdAt: true,
   updatedAt: true,
 });
 
 export const insertCoverLetterSchema = createInsertSchema(coverLetters).omit({
   id: true,
+  userId: true, // Automatically injected by backend from session
   createdAt: true,
   updatedAt: true,
 });

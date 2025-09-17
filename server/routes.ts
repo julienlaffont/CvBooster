@@ -383,8 +383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate Cover Letter Route
-  app.post('/api/cover-letters/generate', isAuthenticated, async (req: any, res) => {
+  // Generate Cover Letter from Existing CV Route  
+  app.post('/api/cover-letters/generate-from-cv', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { cvId, companyName, position, jobDescription, sector } = req.body;
