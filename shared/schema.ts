@@ -144,6 +144,7 @@ export const updateCoverLetterSchema = insertCoverLetterSchema.omit({
 
 export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,
+  userId: true, // Automatically injected by backend from session
   createdAt: true,
   updatedAt: true,
 });

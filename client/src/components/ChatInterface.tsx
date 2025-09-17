@@ -12,66 +12,81 @@ import {
   useConversationMessages,
   useSendMessage
 } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'ai';
-  timestamp: string;
+  role: 'user' | 'assistant';
+  createdAt: string;
 }
 
-// TODO: Remove mock data - replace with real chat data from API
-const mockMessages: Message[] = [
-  {
-    id: "1",
-    content: "Bonjour ! Je suis ton assistant IA CVBooster. Comment puis-je t'aider à améliorer tes candidatures aujourd'hui ?",
-    sender: 'ai',
-    timestamp: "Il y a 5 min"
-  },
-  {
-    id: "2", 
-    content: "Salut ! J'aimerais savoir comment améliorer la section compétences de mon CV pour un poste de développeur React.",
-    sender: 'user',
-    timestamp: "Il y a 4 min"
-  },
-  {
-    id: "3",
-    content: "Excellente question ! Pour un poste de développeur React, voici mes recommandations :\\n\\n1. **Compétences techniques prioritaires :**\\n   - React.js & hooks (useState, useEffect, etc.)\\n   - JavaScript ES6+\\n   - TypeScript\\n   - Redux ou Context API\\n\\n2. **Outils complémentaires :**\\n   - Webpack, Vite\\n   - Jest, React Testing Library\\n   - Git/GitHub\\n\\n3. **Soft skills importantes :**\\n   - Résolution de problèmes\\n   - Travail en équipe\\n   - Veille technologique\\n\\nVeux-tu que j'analyse ton CV actuel pour des suggestions plus personnalisées ?",
-    sender: 'ai',
-    timestamp: "Il y a 3 min"
-  }
-];
+const formatDate = (dateString: string | Date | null) => {
+  if (!dateString) return "Inconnue";
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 1) return "À l'instant";
+  if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`;
+  if (diffInMinutes < 1440) return `Il y a ${Math.floor(diffInMinutes / 60)}h`;
+  return date.toLocaleDateString('fr-FR');
+};
 
 export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [inputValue, setInputValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const { isAuthenticated, user } = useAuth();
+  const { toast } = useToast();
+  
+  const { data: conversations = [] } = useConversations();
+  const { data: messages = [], isLoading: messagesLoading } = useConversationMessages(
+    currentConversationId || ""
+  );
+  const createConversation = useCreateConversation();
+  const sendMessage = useSendMessage();
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
+    
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentification requise",
+        description: "Connecte-toi pour utiliser l'assistant IA.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      sender: 'user',
-      timestamp: "À l'instant"
-    };
+    try {
+      let conversationId = currentConversationId;
+      
+      // Create conversation if none exists
+      if (!conversationId) {
+        const newConversation = await createConversation.mutateAsync({
+          title: "Conversation avec l'IA"
+        });
+        conversationId = newConversation.id;
+        setCurrentConversationId(conversationId);
+      }
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue("");
-    setIsLoading(true);
+      const messageContent = inputValue;
+      setInputValue("");
 
-    // TODO: Replace with actual API call to OpenAI
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Merci pour votre question ! Je traite votre demande et vous prépare une réponse personnalisée. Cette fonctionnalité sera connectée à l'IA dans la version complète.",
-        sender: 'ai',
-        timestamp: "À l'instant"
-      };
-      setMessages(prev => [...prev, aiResponse]);
-      setIsLoading(false);
-    }, 2000);
+      // Send message to API
+      await sendMessage.mutateAsync({
+        conversationId: conversationId!,
+        content: messageContent
+      });
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer le message. Réessaie dans un moment.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -80,6 +95,16 @@ export function ChatInterface() {
       handleSendMessage();
     }
   };
+  
+  // Initialize conversation if user is authenticated and no active conversation
+  useEffect(() => {
+    if (isAuthenticated && conversations.length > 0 && !currentConversationId) {
+      // Use most recent conversation
+      setCurrentConversationId(conversations[0].id);
+    }
+  }, [isAuthenticated, conversations, currentConversationId]);
+  
+  const isLoading = sendMessage.isPending || createConversation.isPending;
 
   return (
     <Card className="flex flex-col h-[600px]">
@@ -104,46 +129,69 @@ export function ChatInterface() {
       <CardContent className="flex-1 flex flex-col p-0">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4" data-testid="chat-messages">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              data-testid={`message-${message.sender}-${message.id}`}
-            >
-              {message.sender === 'ai' && (
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    <Bot className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              
-              <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-1' : ''}`}>
-                <div
-                  className={`rounded-lg p-3 ${
-                    message.sender === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
-                  }`}
-                >
-                  <p className="text-sm leading-relaxed whitespace-pre-line">
-                    {message.content}
+          {!isAuthenticated ? (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <Bot className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="font-semibold text-lg mb-2">Assistant IA CVBooster</h3>
+              <p className="text-muted-foreground mb-4">
+                Connecte-toi pour commencer une conversation avec l'IA et recevoir des conseils personnalisés.
+              </p>
+              <Button asChild>
+                <a href="/api/login" data-testid="button-login-chat">
+                  Se connecter
+                </a>
+              </Button>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <Bot className="h-16 w-16 text-primary mb-4" />
+              <h3 className="font-semibold text-lg mb-2">Bonjour !</h3>
+              <p className="text-muted-foreground mb-4">
+                Je suis ton assistant IA CVBooster. Pose-moi tes questions sur ton CV, tes lettres de motivation ou ta recherche d'emploi !
+              </p>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                data-testid={`message-${message.role}-${message.id}`}
+              >
+                {message.role === 'assistant' && (
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <Bot className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                
+                <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                  <div
+                    className={`rounded-lg p-3 ${
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed whitespace-pre-line">
+                      {message.content}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 px-1">
+                    {formatDate(message.createdAt)}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 px-1">
-                  {message.timestamp}
-                </p>
-              </div>
 
-              {message.sender === 'user' && (
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-secondary text-secondary-foreground">
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-          ))}
+                {message.role === 'user' && (
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-secondary text-secondary-foreground">
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+            ))
+          )}
           
           {isLoading && (
             <div className="flex gap-3 justify-start">
@@ -169,14 +217,14 @@ export function ChatInterface() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Pose ta question à l'IA..."
-              disabled={isLoading}
+              placeholder={isAuthenticated ? "Pose ta question à l'IA..." : "Connecte-toi pour discuter avec l'IA"}
+              disabled={isLoading || !isAuthenticated}
               data-testid="input-chat-message"
               className="flex-1"
             />
             <Button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isLoading || !isAuthenticated}
               size="icon"
               data-testid="button-send-message"
             >
