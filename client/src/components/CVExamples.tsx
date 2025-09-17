@@ -43,11 +43,13 @@ export function CVExamples() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {examples.map((example) => (
-            <Card key={example.id} className="group hover-elevate overflow-hidden" data-testid={`cv-example-${example.id}`}>
+            <Card key={example.id} className="group hover-elevate" data-testid={`cv-example-${example.id}`}>
               <div className="aspect-[3/4] overflow-hidden bg-white rounded-t-lg">
                 <img 
                   src={example.image} 
                   alt={example.alt}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
