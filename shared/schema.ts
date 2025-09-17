@@ -135,14 +135,10 @@ export const insertCoverLetterSchema = createInsertSchema(coverLetters).omit({
   updatedAt: true,
 });
 
-// Update schemas for secure updates
-export const updateCvSchema = insertCvSchema.omit({
-  userId: true,
-}).partial();
+// Update schemas for secure updates (userId already omitted from insert schemas)
+export const updateCvSchema = insertCvSchema.partial();
 
-export const updateCoverLetterSchema = insertCoverLetterSchema.omit({
-  userId: true,
-}).partial();
+export const updateCoverLetterSchema = insertCoverLetterSchema.partial();
 
 export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,

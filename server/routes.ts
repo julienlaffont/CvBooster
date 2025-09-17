@@ -20,9 +20,7 @@ import { jsPDF } from "jspdf";
 import sharp from "sharp";
 import OpenAI from "openai";
 
-// Suppress TypeScript errors for untyped modules
-// @ts-ignore
-import pdfParse from 'pdf-parse';
+// Note: pdf-parse is dynamically imported in extractTextFromFile function
 
 // File upload configuration
 const upload = multer({
@@ -68,7 +66,7 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
     if (file.mimetype === 'application/pdf') {
       try {
         // Use dynamic import to avoid startup crash
-        const pdfParse = (await import('pdf-parse')).default;
+        const pdfParse = (await import('pdf-parse')).default as any;
         const data = await pdfParse(file.buffer);
         return data.text;
       } catch (error) {
@@ -1124,7 +1122,7 @@ Sois personnalisé, constructif et motivant.`;
     if (cv.content) {
       // Clean up the content while preserving French characters and structure
       const cleanContent = cv.content
-        .replace(/[^\p{L}\p{N}\s\-\.@(),:/\n\r•\-+'#&]/gu, ' ')  // Keep Unicode letters, numbers, and critical ATS punctuation like +, #, ', &
+        .replace(/[^a-zA-ZÀ-ÿ0-9\s\-\.@(),:/\n\r•\-+'#&]/g, ' ')  // Keep letters, numbers, French chars, and critical ATS punctuation
         .replace(/[ \t]+/g, ' ')  // Normalize horizontal whitespace only
         .replace(/\n{3,}/g, '\n\n')  // Limit consecutive line breaks to max 2
         .replace(/•/g, '-')  // Convert bullets to ATS-safe dashes
