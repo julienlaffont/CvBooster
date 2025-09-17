@@ -1,6 +1,6 @@
 // API client for CVBooster backend
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "./queryClient";
+import { apiRequest, getQueryFn } from "./queryClient";
 import type { 
   Cv, 
   CoverLetter, 
@@ -17,7 +17,12 @@ import type {
 export function useUser() {
   return useQuery<any>({
     queryKey: ['/api/auth/user'],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - avoid frequent refetches
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnReconnect: false, // Don't refetch on network reconnect
+    refetchInterval: false, // Disable automatic refetching
   });
 }
 
