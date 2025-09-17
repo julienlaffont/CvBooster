@@ -4,6 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { Logo } from "@/components/Logo";
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -26,12 +27,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b bg-background">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <Link href="/">
-          <div className="flex items-center gap-2" data-testid="link-home">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">
-              CV
-            </div>
-            <span className="font-semibold text-lg">CVBooster</span>
-          </div>
+          <Logo data-testid="link-home" className="hover:opacity-80 transition-opacity" />
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">

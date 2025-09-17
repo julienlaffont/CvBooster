@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Twitter, Linkedin, Instagram, Github } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,12 +12,7 @@ export function Footer() {
           {/* Logo & Description */}
           <div className="space-y-4">
             <Link href="/">
-              <div className="flex items-center gap-2" data-testid="link-footer-home">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">
-                  CV
-                </div>
-                <span className="font-semibold text-lg">CVBooster</span>
-              </div>
+              <Logo data-testid="link-footer-home" className="hover:opacity-80 transition-opacity" />
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs">
               L'outil IA qui transforme tes candidatures et t'aide à décrocher le job de tes rêves.
