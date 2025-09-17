@@ -611,6 +611,344 @@ INSTRUCTIONS:
     }
   });
 
+  // AI-powered Cover Letter Generation
+  app.post('/api/cover-letters/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { companyName, position, sector, personalInfo, experience, motivations } = req.body;
+      
+      if (!companyName || !position) {
+        return res.status(400).json({ error: 'Nom de l\'entreprise et poste requis' });
+      }
+
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const prompt = `Génère une lettre de motivation professionnelle en français pour:
+
+ENTREPRISE ET POSTE:
+- Entreprise: ${companyName}
+- Poste: ${position}
+- Secteur: ${sector || 'Non spécifié'}
+
+INFORMATIONS PERSONNELLES:
+- Nom: ${personalInfo?.firstName || ''} ${personalInfo?.lastName || ''}
+- Email: ${personalInfo?.email || ''}
+- Téléphone: ${personalInfo?.phone || ''}
+
+EXPÉRIENCE PERTINENTE:
+${(experience || []).map((exp: any) => `
+- ${exp.position} chez ${exp.company} (${exp.duration || 'Durée non spécifiée'})
+  ${exp.description || ''}
+`).join('')}
+
+MOTIVATIONS:
+${motivations || 'Fortement motivé(e) à rejoindre cette entreprise'}
+
+INSTRUCTIONS:
+1. Crée une lettre de motivation personnalisée et convaincante
+2. Structure: En-tête, Introduction, Corps (2-3 paragraphes), Conclusion
+3. Adapte le ton et le vocabulaire au secteur d'activité
+4. Mets en avant les compétences pertinentes pour le poste
+5. Montre une connaissance de l'entreprise et du secteur
+6. Utilise un français professionnel et impeccable
+7. Reste authentique et évite les clichés
+8. Longueur optimale: 250-400 mots`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un expert en rédaction de lettres de motivation françaises. Tu crées des lettres personnalisées, convaincantes et adaptées au marché du travail français. Tu connais les conventions professionnelles françaises et adaptes ton style selon le secteur d'activité."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 1500,
+        temperature: 0.7
+      });
+
+      const generatedContent = response.choices[0]?.message?.content || 'Lettre générée avec succès';
+
+      res.status(200).json({ 
+        content: generatedContent,
+        message: 'Lettre de motivation générée avec succès par l\'IA',
+        companyName,
+        position,
+        sector
+      });
+    } catch (error: any) {
+      console.error('Error generating cover letter:', error);
+      if (error.message.includes('API key')) {
+        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      }
+      res.status(500).json({ error: 'Erreur lors de la génération de la lettre' });
+    }
+  });
+
+  // AI CV Analysis and Optimization Suggestions
+  app.post('/api/cvs/analyze-advanced', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { cvId, targetSector, targetPosition } = req.body;
+      
+      if (!cvId) {
+        return res.status(400).json({ error: 'ID du CV requis' });
+      }
+
+      const cv = await storage.getCv(cvId);
+      if (!cv || cv.userId !== userId) {
+        return res.status(404).json({ error: 'CV non trouvé' });
+      }
+
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const prompt = `Analyse ce CV français et fournis des suggestions d'amélioration détaillées:
+
+CONTENU DU CV:
+${cv.content}
+
+OBJECTIF PROFESSIONNEL:
+- Secteur visé: ${targetSector || cv.sector || 'Non spécifié'}
+- Poste visé: ${targetPosition || cv.position || 'Non spécifié'}
+
+MISSION D'ANALYSE:
+1. Évalue la structure et la présentation
+2. Analyse la pertinence du contenu pour le poste visé
+3. Vérifie l'optimisation ATS (mots-clés, formatage)
+4. Évalue l'impact des descriptions d'expériences
+5. Contrôle la cohérence et la progression de carrière
+6. Suggestions d'amélioration concrètes
+
+RÉSULTAT ATTENDU au format JSON:
+{
+  "score": number (0-100),
+  "strengths": ["point fort 1", "point fort 2", ...],
+  "improvements": [
+    {
+      "category": "Structure|Contenu|ATS|Expérience|Cohérence",
+      "issue": "description du problème",
+      "suggestion": "suggestion d'amélioration précise",
+      "priority": "haute|moyenne|faible"
+    }
+  ],
+  "atsOptimization": {
+    "missingKeywords": ["mot-clé manquant 1", ...],
+    "formatIssues": ["problème de format 1", ...],
+    "score": number (0-100)
+  },
+  "careerAdvice": "conseil de carrière personnalisé",
+  "nextSteps": ["prochaine étape 1", "prochaine étape 2", ...]
+}
+
+Fournis une analyse détaillée et constructive en français.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un expert en recrutement et optimisation de CV français. Tu analyses les CV selon les standards du marché français et fournis des conseils précis pour maximiser les chances de décrocher un entretien. Tu comprends les spécificités sectorielles et les attentes des ATS."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+      });
+
+      const analysisResult = JSON.parse(response.choices[0]?.message?.content || '{}');
+
+      // Update CV with analysis results
+      await storage.updateCv(cvId, {
+        score: analysisResult.score,
+        suggestions: analysisResult,
+        status: 'analyzed'
+      });
+
+      res.status(200).json(analysisResult);
+    } catch (error: any) {
+      console.error('Error analyzing CV:', error);
+      if (error.message.includes('API key')) {
+        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      }
+      res.status(500).json({ error: 'Erreur lors de l\'analyse du CV' });
+    }
+  });
+
+  // Personalized Career Advice
+  app.post('/api/career/advice', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { currentSector, targetSector, experience, skills, goals } = req.body;
+
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const prompt = `Fournis des conseils de carrière personnalisés pour ce profil professionnel français:
+
+PROFIL ACTUEL:
+- Secteur actuel: ${currentSector || 'Non spécifié'}
+- Secteur visé: ${targetSector || 'Non spécifié'}
+- Expérience: ${experience || 'Non spécifié'}
+- Compétences: ${(skills || []).join(', ') || 'Non spécifié'}
+- Objectifs: ${goals || 'Évolution de carrière'}
+
+CONTEXTE DU MARCHÉ FRANÇAIS 2024:
+- Considère les tendances actuelles du marché de l'emploi français
+- Intègre les impacts de la digitalisation et de l'IA
+- Tiens compte des évolutions sectorielles post-COVID
+- Adapte aux spécificités du marché du travail français
+
+CONSEILS DEMANDÉS au format JSON:
+{
+  "marketInsights": "analyse du marché et tendances",
+  "skillsGap": ["compétence manquante 1", "compétence manquante 2", ...],
+  "actionPlan": [
+    {
+      "action": "action à entreprendre",
+      "timeframe": "délai",
+      "priority": "haute|moyenne|faible",
+      "resources": "ressources nécessaires"
+    }
+  ],
+  "certifications": ["certification recommandée 1", ...],
+  "networking": "conseils de réseautage spécifiques",
+  "salaryInsights": "insights sur les salaires et négociation",
+  "nextOpportunities": ["opportunité 1", "opportunité 2", ...]
+}
+
+Fournis des conseils concrets et actionnables adaptés au contexte français.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un conseiller en évolution professionnelle expert du marché français. Tu connais les tendances sectorielles, les attentes des employeurs français, et les meilleures stratégies pour réussir sa carrière en France. Tu fournis des conseils pragmatiques et personnalisés."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.7,
+        response_format: { type: "json_object" }
+      });
+
+      const careerAdvice = JSON.parse(response.choices[0]?.message?.content || '{}');
+
+      res.status(200).json(careerAdvice);
+    } catch (error: any) {
+      console.error('Error generating career advice:', error);
+      if (error.message.includes('API key')) {
+        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      }
+      res.status(500).json({ error: 'Erreur lors de la génération des conseils' });
+    }
+  });
+
+  // Smart Dashboard Statistics with AI Insights
+  app.get('/api/dashboard/ai-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user's documents and statistics
+      const cvs = await storage.getCvsByUserId(userId);
+      const coverLetters = await storage.getCoverLettersByUserId(userId);
+      
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      // Analyze user's profile for personalized insights
+      const userProfile = {
+        totalCVs: cvs.length,
+        totalCoverLetters: coverLetters.length,
+        averageScore: cvs.length > 0 ? Math.round(cvs.reduce((sum, cv) => sum + (cv.score || 0), 0) / cvs.length) : 0,
+        sectors: [...new Set(cvs.map(cv => cv.sector).filter(Boolean))],
+        positions: [...new Set(cvs.map(cv => cv.position).filter(Boolean))],
+        recentActivity: cvs.concat(coverLetters).sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        ).slice(0, 5)
+      };
+
+      const prompt = `Analyse ce profil utilisateur et fournis des insights personnalisés:
+
+PROFIL UTILISATEUR:
+- Nombre de CV: ${userProfile.totalCVs}
+- Nombre de lettres: ${userProfile.totalCoverLetters}
+- Score moyen des CV: ${userProfile.averageScore}/100
+- Secteurs d'intérêt: ${userProfile.sectors.join(', ') || 'Aucun spécifié'}
+- Postes visés: ${userProfile.positions.join(', ') || 'Aucun spécifié'}
+
+FOURNIS au format JSON:
+{
+  "profileInsights": "analyse du profil et progression",
+  "recommendations": [
+    {
+      "type": "amélioration|opportunité|formation|networking",
+      "title": "titre de la recommandation",
+      "description": "description détaillée",
+      "actionable": true/false,
+      "urgency": "haute|moyenne|faible"
+    }
+  ],
+  "marketTrends": "tendances du marché pertinentes pour ce profil",
+  "nextGoals": ["objectif 1", "objectif 2", ...],
+  "performanceScore": number (0-100),
+  "motivationalMessage": "message personnalisé et motivant"
+}
+
+Sois personnalisé, constructif et motivant.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un coach carrière IA qui analyse les profils utilisateurs pour fournir des insights personnalisés et des recommandations actionnables. Tu es motivant, précis et adapté au contexte professionnel français."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 1500,
+        temperature: 0.7,
+        response_format: { type: "json_object" }
+      });
+
+      const aiInsights = JSON.parse(response.choices[0]?.message?.content || '{}');
+
+      // Combine basic stats with AI insights
+      const enhancedStats = {
+        ...userProfile,
+        aiInsights,
+        lastUpdated: new Date().toISOString()
+      };
+
+      res.status(200).json(enhancedStats);
+    } catch (error: any) {
+      console.error('Error generating AI dashboard stats:', error);
+      if (error.message.includes('API key')) {
+        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      }
+      res.status(500).json({ error: 'Erreur lors de la génération des statistiques IA' });
+    }
+  });
+
   // Photo upload and enhancement functionality
   app.post('/api/upload/photo', isAuthenticated, photoUpload.single('photo'), async (req: any, res) => {
     try {

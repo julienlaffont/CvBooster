@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Moon, Sun } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Header() {
+  const { user, isAuthenticated } = useAuth();
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -58,32 +61,68 @@ export function Header() {
           >
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <Link href="/dashboard">
-            <Button variant="ghost" data-testid="button-dashboard">
-              Dashboard
-            </Button>
-          </Link>
-          <Link href="/chat">
-            <Button variant="ghost" data-testid="button-chat">
-              IA Coach
-            </Button>
-          </Link>
-          <Link href="/photo">
-            <Button variant="ghost" data-testid="button-photo">
-              Photo Pro
-            </Button>
-          </Link>
-          <Link href="/wizard">
-            <Button variant="ghost" data-testid="button-wizard">
-              Assistant CV
-            </Button>
-          </Link>
-          <Button variant="ghost" data-testid="button-login">
-            Connexion
-          </Button>
-          <Button data-testid="button-signup">
-            Inscription
-          </Button>
+          
+          {isAuthenticated ? (
+            <>
+              <Link href="/dashboard">
+                <Button variant="ghost" data-testid="button-dashboard">
+                  Dashboard
+                </Button>
+              </Link>
+              <Link href="/chat">
+                <Button variant="ghost" data-testid="button-chat">
+                  IA Coach
+                </Button>
+              </Link>
+              <Link href="/photo">
+                <Button variant="ghost" data-testid="button-photo">
+                  Photo Pro
+                </Button>
+              </Link>
+              <Link href="/wizard">
+                <Button variant="ghost" data-testid="button-wizard">
+                  Assistant CV
+                </Button>
+              </Link>
+              <Link href="/cover-letter">
+                <Button variant="ghost" data-testid="button-cover-letter">
+                  Lettre IA
+                </Button>
+              </Link>
+              
+              <div className="flex items-center gap-2 ml-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.profileImageUrl || ""} />
+                  <AvatarFallback data-testid="avatar-fallback">
+                    {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  variant="ghost"
+                  onClick={() => window.location.href = "/api/logout"}
+                  data-testid="button-logout"
+                >
+                  Déconnexion
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-login"
+              >
+                Connexion
+              </Button>
+              <Button
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-signup"
+              >
+                Inscription
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
