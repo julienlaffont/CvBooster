@@ -18,6 +18,7 @@ import mammoth from "mammoth";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { jsPDF } from "jspdf";
 import sharp from "sharp";
+import OpenAI from "openai";
 
 // Type declarations for modules without types
 declare module 'pdf-parse';
@@ -513,6 +514,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error sending message:', error);
       res.status(500).json({ error: 'Failed to send message' });
+    }
+  });
+
+  // AI CV Generation from wizard data
+  app.post('/api/cvs/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { personalInfo, experiences, education, skills, languages, certifications, sector, targetPosition } = req.body;
+      
+      // Validate required fields
+      if (!personalInfo?.firstName || !personalInfo?.lastName || !sector || !targetPosition) {
+        return res.status(400).json({ error: 'Informations obligatoires manquantes' });
+      }
+
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      // Create detailed prompt for CV generation
+      const prompt = `Génère un CV professionnel en français pour:
+
+INFORMATIONS PERSONNELLES:
+- Nom: ${personalInfo.firstName} ${personalInfo.lastName}
+- Email: ${personalInfo.email}
+- Téléphone: ${personalInfo.phone || 'Non renseigné'}
+- Adresse: ${personalInfo.address || 'Non renseigné'}
+- LinkedIn: ${personalInfo.linkedIn || 'Non renseigné'}
+- Résumé: ${personalInfo.summary || 'À définir'}
+
+OBJECTIF PROFESSIONNEL:
+- Secteur: ${sector}
+- Poste visé: ${targetPosition}
+
+EXPÉRIENCES PROFESSIONNELLES:
+${(experiences || []).map((exp: any) => `
+- ${exp.position} chez ${exp.company} (${exp.startDate} - ${exp.current ? 'Actuellement' : exp.endDate})
+  ${exp.description || 'Description à définir'}
+`).join('')}
+
+FORMATION:
+${(education || []).map((edu: any) => `
+- ${edu.degree} en ${edu.field} à ${edu.institution} (${edu.startDate} - ${edu.current ? 'En cours' : edu.endDate})
+`).join('')}
+
+COMPÉTENCES:
+${(skills || []).join(', ')}
+
+LANGUES:
+${(languages || []).join(', ')}
+
+CERTIFICATIONS:
+${(certifications || []).join(', ')}
+
+INSTRUCTIONS:
+1. Crée un CV professionnel structuré et optimisé ATS
+2. Utilise un format français standard avec sections claires
+3. Adapte le contenu au secteur "${sector}" et au poste "${targetPosition}"
+4. Optimise les descriptions d'expériences avec des verbes d'action et des résultats mesurables
+5. Assure-toi que le CV soit cohérent et professionnel
+6. Utilise des mots-clés pertinents pour le secteur visé
+7. Structure: En-tête, Résumé professionnel, Expériences, Formation, Compétences, Langues, Certifications
+8. Ne pas inventer d'informations non fournies
+9. Garder un ton professionnel et adapté au marché français`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un expert en rédaction de CV français. Tu crées des CV professionnels optimisés pour les ATS (Applicant Tracking Systems) et adaptés au marché du travail français. Tu es spécialisé dans l'adaptation du contenu selon le secteur d'activité et le poste visé."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 2000,
+        temperature: 0.7
+      });
+
+      const generatedContent = response.choices[0]?.message?.content || 'CV généré avec succès';
+
+      res.status(200).json({ 
+        content: generatedContent,
+        message: 'CV généré avec succès par l\'IA',
+        sector,
+        targetPosition
+      });
+    } catch (error: any) {
+      console.error('Error generating CV:', error);
+      if (error.message.includes('API key')) {
+        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      }
+      res.status(500).json({ error: 'Erreur lors de la génération du CV' });
     }
   });
 

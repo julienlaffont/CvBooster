@@ -73,6 +73,11 @@ export function Header() {
               Photo Pro
             </Button>
           </Link>
+          <Link href="/wizard">
+            <Button variant="ghost" data-testid="button-wizard">
+              Assistant CV
+            </Button>
+          </Link>
           <Button variant="ghost" data-testid="button-login">
             Connexion
           </Button>

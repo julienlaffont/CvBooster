@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import DashboardPage from "@/pages/DashboardPage";
 import ChatPage from "@/pages/ChatPage";
 import PhotoEnhancementPage from "@/pages/PhotoEnhancementPage";
+import CVWizardPage from "@/pages/CVWizardPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/chat" component={ChatPage} />
       <Route path="/photo" component={PhotoEnhancementPage} />
+      <Route path="/wizard" component={CVWizardPage} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
