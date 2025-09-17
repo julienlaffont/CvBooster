@@ -66,7 +66,7 @@ async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
     if (file.mimetype === 'application/pdf') {
       try {
         // Use dynamic import to avoid startup crash
-        const pdfParse = (await import('pdf-parse')).default as any;
+        const pdfParse = (await import('pdf-parse')).default;
         const data = await pdfParse(file.buffer);
         return data.text;
       } catch (error) {
