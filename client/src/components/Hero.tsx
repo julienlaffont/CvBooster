@@ -19,9 +19,9 @@ export function Hero() {
         </Badge>
         
         <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-          Améliore ton CV avec l'IA et
+          Crée ton CV parfait grâce à l'IA et
           <br />
-          <span className="text-primary">décroche plus d'entretiens</span>
+          <span className="text-primary">décroche des entretiens plus rapidement</span>
         </h1>
         
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -34,18 +34,19 @@ export function Hero() {
             size="lg" 
             className="text-lg px-8" 
             onClick={handleCTAClick}
-            data-testid="button-cta-primary"
+            data-testid="button-cta-cv"
           >
-            Améliore ton CV maintenant
+            Créer mon CV
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <Button 
             variant="outline" 
             size="lg" 
             className="text-lg px-8"
-            data-testid="button-cta-secondary"
+            onClick={handleCTAClick}
+            data-testid="button-cta-lettre"
           >
-            Voir une démo
+            Améliorer ma lettre de motivation
           </Button>
         </div>
         

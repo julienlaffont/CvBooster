@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { Twitter, Linkedin, Instagram, Github } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -108,8 +109,22 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             © {currentYear} CVBooster. Tous droits réservés.
           </p>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Fait avec ❤️ en France</span>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <a href="https://twitter.com/cvbooster" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter" data-testid="link-social-twitter">
+                <Twitter className="h-5 w-5" />
+              </a>
+              <a href="https://linkedin.com/company/cvbooster" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn" data-testid="link-social-linkedin">
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a href="https://instagram.com/cvbooster" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Instagram" data-testid="link-social-instagram">
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a href="https://github.com/cvbooster" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub" data-testid="link-social-github">
+                <Github className="h-5 w-5" />
+              </a>
+            </div>
+            <span className="text-sm text-muted-foreground">Conçu en France</span>
           </div>
         </div>
       </div>

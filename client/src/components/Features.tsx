@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, FileText, MessageSquare, Download, Users, Zap } from "lucide-react";
+import { Brain, FileText, MessageSquare, Download, Users, Zap, Camera } from "lucide-react";
 
 const features = [
   {
@@ -14,6 +14,12 @@ const features = [
     title: "Lettres Personnalisées",
     description: "Génère des lettres de motivation adaptées à chaque poste et secteur d'activité.",
     badge: "Automatique"
+  },
+  {
+    icon: Camera,
+    title: "Amélioration Photo IA",
+    description: "Optimise ta photo de profil avec l'IA : fond neutre, luminosité professionnelle et style corporate.",
+    badge: "Photo Pro"
   },
   {
     icon: MessageSquare,
@@ -32,12 +38,6 @@ const features = [
     title: "Multi-secteurs",
     description: "Conseils adaptés à ton domaine : Tech, Marketing, Finance, Santé, et bien plus.",
     badge: "50+ secteurs"
-  },
-  {
-    icon: Zap,
-    title: "Résultats Rapides",
-    description: "Améliore ton CV en moins de 10 minutes et vois la différence immédiatement.",
-    badge: "< 10 min"
   }
 ];
 
