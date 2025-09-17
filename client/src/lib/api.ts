@@ -319,3 +319,91 @@ export function useSendMessage() {
     },
   });
 }
+
+// Photo upload and enhancement hooks
+export function useUploadPhoto() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (photoFile: File) => {
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+      
+      const res = await fetch('/api/upload/photo', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+      
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    },
+  });
+}
+
+export function useAnalyzePhoto() {
+  return useMutation({
+    mutationFn: async (photoFile: File) => {
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+      
+      const res = await fetch('/api/photo/analyze', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+      
+      return await res.json();
+    },
+  });
+}
+
+export function useEnhancePhoto() {
+  return useMutation({
+    mutationFn: async (photoFile: File) => {
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+      
+      const res = await fetch('/api/photo/enhance', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+      
+      return await res.json();
+    },
+  });
+}
+
+export function useApplyEnhancedPhoto() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (enhancedImageData: string) => {
+      const res = await apiRequest('POST', '/api/photo/apply-enhanced', { 
+        enhancedImageData 
+      });
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    },
+  });
+}

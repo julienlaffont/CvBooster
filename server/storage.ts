@@ -24,6 +24,7 @@ export interface IStorage {
   // User operations - required for Replit Auth
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserProfileImage(userId: string, imageUrl: string): Promise<User>;
   
   // CV operations
   getUserCvs(userId: string): Promise<Cv[]>;
@@ -68,6 +69,21 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+    return user;
+  }
+
+  async updateUserProfileImage(userId: string, imageUrl: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        profileImageUrl: imageUrl,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) {
+      throw new Error('User not found');
+    }
     return user;
   }
 

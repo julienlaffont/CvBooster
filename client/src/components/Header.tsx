@@ -68,6 +68,11 @@ export function Header() {
               IA Coach
             </Button>
           </Link>
+          <Link href="/photo">
+            <Button variant="ghost" data-testid="button-photo">
+              Photo Pro
+            </Button>
+          </Link>
           <Button variant="ghost" data-testid="button-login">
             Connexion
           </Button>

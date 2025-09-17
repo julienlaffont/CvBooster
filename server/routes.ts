@@ -17,6 +17,7 @@ import {
 import mammoth from "mammoth";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { jsPDF } from "jspdf";
+import sharp from "sharp";
 
 // Type declarations for modules without types
 declare module 'pdf-parse';
@@ -35,6 +36,23 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error('Type de fichier non supporté. Utilisez PDF, DOC, DOCX ou TXT.'));
+    }
+  }
+});
+
+// Photo upload configuration
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for images
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept image files
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Type de fichier non supporté. Utilisez JPG, PNG ou WebP.'));
     }
   }
 });
@@ -495,6 +513,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error sending message:', error);
       res.status(500).json({ error: 'Failed to send message' });
+    }
+  });
+
+  // Photo upload and enhancement functionality
+  app.post('/api/upload/photo', isAuthenticated, photoUpload.single('photo'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucune photo uploadée' });
+      }
+
+      const userId = req.user.claims.sub;
+      
+      // Convert image to base64 data URL for storage
+      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      
+      // Update user profile with new image
+      const user = await storage.updateUserProfileImage(userId, base64Image);
+      
+      res.status(200).json({ 
+        user, 
+        message: 'Photo uploadée avec succès',
+        imageUrl: base64Image
+      });
+    } catch (error: any) {
+      console.error('Error uploading photo:', error);
+      if (error.message.includes('Type de fichier')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Erreur lors de l\'upload de la photo' });
+    }
+  });
+
+  // AI Photo Enhancement Analysis
+  app.post('/api/photo/analyze', isAuthenticated, photoUpload.single('photo'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucune photo fournie pour l\'analyse' });
+      }
+
+      // Convert to base64 for OpenAI Vision API
+      const base64Image = req.file.buffer.toString('base64');
+      
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      // Use OpenAI Vision to analyze the photo
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Analyse cette photo de profil professionnel et fournis des suggestions d'amélioration en français. Évalue la qualité de l'éclairage, l'arrière-plan, la composition, et l'apparence professionnelle. Donne des conseils pratiques et concrets."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${req.file.mimetype};base64,${base64Image}`
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 500
+      });
+
+      const analysis = response.choices[0]?.message?.content || 'Analyse non disponible';
+      
+      // Calculate a simple score based on analysis keywords
+      const positiveKeywords = ['professionnel', 'bien', 'bon', 'excellent', 'optimal', 'clair', 'net'];
+      const negativeKeywords = ['flou', 'sombre', 'mauvais', 'améliorer', 'problème'];
+      
+      let score = 50; // Base score
+      positiveKeywords.forEach(keyword => {
+        if (analysis.toLowerCase().includes(keyword)) score += 10;
+      });
+      negativeKeywords.forEach(keyword => {
+        if (analysis.toLowerCase().includes(keyword)) score -= 10;
+      });
+      
+      score = Math.min(100, Math.max(0, score)); // Clamp between 0-100
+
+      res.status(200).json({ 
+        analysis,
+        score,
+        suggestions: analysis.split('.').filter(s => s.trim().length > 0).slice(0, 5) // Extract key suggestions
+      });
+    } catch (error: any) {
+      console.error('Error analyzing photo:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'analyse de la photo' });
+    }
+  });
+
+  // AI Photo Enhancement - Actual Image Processing
+  app.post('/api/photo/enhance', isAuthenticated, photoUpload.single('photo'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucune photo fournie pour l\'amélioration' });
+      }
+
+      // Professional photo enhancement using Sharp
+      const enhancedImageBuffer = await sharp(req.file.buffer)
+        .resize(512, 512, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .normalize() // Normalize brightness/contrast
+        .sharpen({ sigma: 1.2 }) // Light sharpening for crisp look
+        .modulate({
+          brightness: 1.05, // Slight brightness boost
+          saturation: 1.1,  // Slight saturation boost
+          hue: 0
+        })
+        .jpeg({
+          quality: 92,
+          progressive: true
+        })
+        .toBuffer();
+
+      // Convert enhanced image to base64 data URL
+      const enhancedBase64 = `data:image/jpeg;base64,${enhancedImageBuffer.toString('base64')}`;
+      
+      res.status(200).json({ 
+        enhancedImage: enhancedBase64,
+        message: 'Photo améliorée avec succès',
+        improvements: [
+          'Recadrage professionnel (format carré)',
+          'Normalisation de la luminosité et du contraste', 
+          'Amélioration de la netteté',
+          'Optimisation des couleurs',
+          'Compression optimisée pour le web'
+        ]
+      });
+    } catch (error: any) {
+      console.error('Error enhancing photo:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'amélioration de la photo' });
+    }
+  });
+
+  // Apply Enhanced Photo as Profile Picture
+  app.post('/api/photo/apply-enhanced', isAuthenticated, async (req: any, res) => {
+    try {
+      const { enhancedImageData } = req.body;
+      
+      if (!enhancedImageData) {
+        return res.status(400).json({ error: 'Données d\'image améliorée manquantes' });
+      }
+
+      const userId = req.user.claims.sub;
+      
+      // Update user profile with enhanced image
+      const user = await storage.updateUserProfileImage(userId, enhancedImageData);
+      
+      res.status(200).json({ 
+        user, 
+        message: 'Photo améliorée appliquée comme photo de profil'
+      });
+    } catch (error: any) {
+      console.error('Error applying enhanced photo:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'application de la photo améliorée' });
     }
   });
 
