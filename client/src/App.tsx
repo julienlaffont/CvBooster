@@ -15,18 +15,33 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) {
+    // Show a simple loading page while checking authentication
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Home} />
-      ) : (
+      {/* Public routes */}
+      <Route path="/" component={isAuthenticated ? DashboardPage : Home} />
+      
+      {/* Routes accessible to all users */}
+      <Route path="/wizard" component={CVWizardPage} />
+      <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
+      <Route path="/photo" component={PhotoEnhancementPage} />
+      
+      {/* Protected routes for authenticated users only */}
+      {isAuthenticated && (
         <>
-          <Route path="/" component={DashboardPage} />
           <Route path="/dashboard" component={DashboardPage} />
           <Route path="/chat" component={ChatPage} />
-          <Route path="/photo" component={PhotoEnhancementPage} />
-          <Route path="/wizard" component={CVWizardPage} />
-          <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
         </>
       )}
       <Route component={NotFound} />

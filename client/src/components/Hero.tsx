@@ -6,8 +6,12 @@ import { useLocation } from "wouter";
 export function Hero() {
   const [, setLocation] = useLocation();
   
-  const handleCTAClick = () => {
-    setLocation("/dashboard");
+  const handleCVClick = () => {
+    setLocation("/wizard");
+  };
+  
+  const handleLetterClick = () => {
+    setLocation("/cover-letter");
   };
 
   return (
@@ -33,7 +37,7 @@ export function Hero() {
           <Button 
             size="lg" 
             className="text-lg px-8" 
-            onClick={handleCTAClick}
+            onClick={handleCVClick}
             data-testid="button-cta-cv"
           >
             Créer mon CV
@@ -43,7 +47,7 @@ export function Hero() {
             variant="outline" 
             size="lg" 
             className="text-lg px-8"
-            onClick={handleCTAClick}
+            onClick={handleLetterClick}
             data-testid="button-cta-lettre"
           >
             Améliorer ma lettre de motivation
