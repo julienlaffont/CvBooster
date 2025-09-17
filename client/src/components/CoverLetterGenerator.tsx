@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Sparkles, Save, Download, ArrowRight, Loader2, Building, User, Briefcase } from "lucide-react";
+import { Sparkles, Save, Download, ArrowRight, Loader2, Building, User, Briefcase, Plus } from "lucide-react";
 
 const SECTORS = [
   "Informatique et Tech", "Finance et Banque", "Marketing et Communication", 
@@ -40,12 +40,8 @@ export function CoverLetterGenerator() {
 
   const generateLetter = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('/api/cover-letters/generate', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response;
+      const response = await apiRequest('POST', '/api/cover-letters/generate', data);
+      return await response.json();
     },
     onSuccess: (data) => {
       setGeneratedContent(data.content);
@@ -66,18 +62,14 @@ export function CoverLetterGenerator() {
 
   const saveLetter = useMutation({
     mutationFn: async (content: string) => {
-      const response = await apiRequest('/api/cover-letters', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: `Lettre - ${formData.companyName} - ${formData.position}`,
-          content,
-          companyName: formData.companyName,
-          position: formData.position,
-          sector: formData.sector
-        }),
-        headers: { 'Content-Type': 'application/json' }
+      const response = await apiRequest('POST', '/api/cover-letters', {
+        title: `Lettre - ${formData.companyName} - ${formData.position}`,
+        content,
+        companyName: formData.companyName,
+        position: formData.position,
+        sector: formData.sector
       });
-      return response;
+      return await response.json();
     },
     onSuccess: () => {
       toast({
