@@ -88,9 +88,9 @@ export function Header() {
               
               <div className="flex items-center gap-2 ml-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.profileImageUrl || ""} />
+                  <AvatarImage src={(user as any)?.profileImageUrl || ""} />
                   <AvatarFallback data-testid="avatar-fallback">
-                    {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                    {(user as any)?.firstName?.[0] || (user as any)?.email?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <Button
