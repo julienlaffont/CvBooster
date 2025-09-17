@@ -20,9 +20,9 @@ import { jsPDF } from "jspdf";
 import sharp from "sharp";
 import OpenAI from "openai";
 
-// Type declarations for modules without types
-declare module 'pdf-parse';
-declare module 'html-pdf-node';
+// Suppress TypeScript errors for untyped modules
+// @ts-ignore
+import pdfParse from 'pdf-parse';
 
 // File upload configuration
 const upload = multer({
@@ -700,8 +700,8 @@ INSTRUCTIONS:
         return res.status(400).json({ error: 'ID du CV requis' });
       }
 
-      const cv = await storage.getCv(cvId);
-      if (!cv || cv.userId !== userId) {
+      const cv = await storage.getCv(cvId, userId);
+      if (!cv) {
         return res.status(404).json({ error: 'CV non trouvé' });
       }
 
@@ -769,7 +769,7 @@ Fournis une analyse détaillée et constructive en français.`;
       const analysisResult = JSON.parse(response.choices[0]?.message?.content || '{}');
 
       // Update CV with analysis results
-      await storage.updateCv(cvId, {
+      await storage.updateCv(cvId, userId, {
         score: analysisResult.score,
         suggestions: analysisResult,
         status: 'analyzed'
@@ -865,8 +865,8 @@ Fournis des conseils concrets et actionnables adaptés au contexte français.`;
       const userId = req.user.claims.sub;
       
       // Get user's documents and statistics
-      const cvs = await storage.getCvsByUserId(userId);
-      const coverLetters = await storage.getCoverLettersByUserId(userId);
+      const cvs = await storage.getUserCvs(userId);
+      const coverLetters = await storage.getUserCoverLetters(userId);
       
       const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
@@ -876,11 +876,11 @@ Fournis des conseils concrets et actionnables adaptés au contexte français.`;
       const userProfile = {
         totalCVs: cvs.length,
         totalCoverLetters: coverLetters.length,
-        averageScore: cvs.length > 0 ? Math.round(cvs.reduce((sum, cv) => sum + (cv.score || 0), 0) / cvs.length) : 0,
-        sectors: [...new Set(cvs.map(cv => cv.sector).filter(Boolean))],
-        positions: [...new Set(cvs.map(cv => cv.position).filter(Boolean))],
-        recentActivity: cvs.concat(coverLetters).sort((a, b) => 
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        averageScore: cvs.length > 0 ? Math.round(cvs.reduce((sum: number, cv: any) => sum + (cv.score || 0), 0) / cvs.length) : 0,
+        sectors: Array.from(new Set(cvs.map((cv: any) => cv.sector).filter(Boolean))),
+        positions: Array.from(new Set(cvs.map((cv: any) => cv.position).filter(Boolean))),
+        recentActivity: cvs.concat(coverLetters).sort((a: any, b: any) => 
+          new Date(b.updatedAt || new Date()).getTime() - new Date(a.updatedAt || new Date()).getTime()
         ).slice(0, 5)
       };
 
