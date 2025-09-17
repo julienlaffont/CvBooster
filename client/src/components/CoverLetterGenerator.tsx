@@ -36,27 +36,45 @@ export function CoverLetterGenerator() {
     motivations: ""
   });
   const [generatedContent, setGeneratedContent] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   const generateLetter = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/cover-letters/generate', data);
-      return await response.json();
+      setIsGenerating(true);
+      try {
+        const response = await apiRequest('POST', '/api/cover-letters/generate', data);
+        return await response.json();
+      } catch (error) {
+        setIsGenerating(false);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       setGeneratedContent(data.content);
       setStep(4);
+      setIsGenerating(false);
       toast({
         title: "✨ Lettre générée !",
         description: "Votre lettre de motivation personnalisée est prête"
       });
     },
     onError: (error: any) => {
+      setIsGenerating(false);
+      // Réinitialiser la mutation pour s'assurer qu'isPending revient à false
+      setTimeout(() => {
+        generateLetter.reset();
+      }, 100);
+      
       toast({
         title: "Erreur de génération",
         description: error.message || "Impossible de générer la lettre",
         variant: "destructive"
       });
+    },
+    onSettled: () => {
+      // S'assurer que l'état isPending est correctement remis à false
+      setIsGenerating(false);
     }
   });
 
@@ -399,7 +417,7 @@ export function CoverLetterGenerator() {
         <Button
           variant="outline"
           onClick={() => setStep(Math.max(1, step - 1))}
-          disabled={step === 1 || generateLetter.isPending}
+          disabled={step === 1 || generateLetter.isPending || isGenerating}
           data-testid="button-previous"
         >
           Précédent
@@ -416,10 +434,10 @@ export function CoverLetterGenerator() {
         ) : step === 3 ? (
           <Button
             onClick={handleGenerate}
-            disabled={generateLetter.isPending}
+            disabled={generateLetter.isPending || isGenerating}
             data-testid="button-generate-letter"
           >
-            {generateLetter.isPending ? (
+            {(generateLetter.isPending || isGenerating) ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Sparkles className="h-4 w-4 mr-2" />
@@ -431,6 +449,8 @@ export function CoverLetterGenerator() {
             onClick={() => {
               setStep(1);
               setGeneratedContent("");
+              setIsGenerating(false);
+              generateLetter.reset();
               setFormData({
                 companyName: "",
                 position: "",
