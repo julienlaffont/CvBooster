@@ -169,3 +169,8 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 export type UpdateCv = z.infer<typeof updateCvSchema>;
 export type UpdateCoverLetter = z.infer<typeof updateCoverLetterSchema>;
+
+// Backend-only types that include userId for server-side operations
+export type CreateCv = InsertCv & { userId: string };
+export type CreateCoverLetter = InsertCoverLetter & { userId: string };
+export type CreateConversation = InsertConversation & { userId: string };

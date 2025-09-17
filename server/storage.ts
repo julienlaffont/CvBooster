@@ -9,10 +9,13 @@ import {
   type UpsertUser,
   type Cv,
   type InsertCv,
+  type CreateCv,
   type CoverLetter,
   type InsertCoverLetter,
+  type CreateCoverLetter,
   type Conversation,
   type InsertConversation,
+  type CreateConversation,
   type Message,
   type InsertMessage,
 } from "@shared/schema";
@@ -29,21 +32,21 @@ export interface IStorage {
   // CV operations
   getUserCvs(userId: string): Promise<Cv[]>;
   getCv(id: string, userId: string): Promise<Cv | undefined>;
-  createCv(cv: InsertCv): Promise<Cv>;
+  createCv(cv: CreateCv): Promise<Cv>;
   updateCv(id: string, userId: string, updates: Partial<InsertCv>): Promise<Cv>;
   deleteCv(id: string, userId: string): Promise<void>;
   
   // Cover letter operations
   getUserCoverLetters(userId: string): Promise<CoverLetter[]>;
   getCoverLetter(id: string, userId: string): Promise<CoverLetter | undefined>;
-  createCoverLetter(letter: InsertCoverLetter): Promise<CoverLetter>;
+  createCoverLetter(letter: CreateCoverLetter): Promise<CoverLetter>;
   updateCoverLetter(id: string, userId: string, updates: Partial<InsertCoverLetter>): Promise<CoverLetter>;
   deleteCoverLetter(id: string, userId: string): Promise<void>;
   
   // Conversation operations
   getUserConversations(userId: string): Promise<Conversation[]>;
   getConversation(id: string, userId: string): Promise<Conversation | undefined>;
-  createConversation(conversation: InsertConversation): Promise<Conversation>;
+  createConversation(conversation: CreateConversation): Promise<Conversation>;
   
   // Message operations
   getConversationMessages(conversationId: string, userId: string): Promise<Message[]>;
@@ -104,7 +107,7 @@ export class DatabaseStorage implements IStorage {
     return cv;
   }
 
-  async createCv(cv: InsertCv): Promise<Cv> {
+  async createCv(cv: CreateCv): Promise<Cv> {
     const [newCv] = await db.insert(cvs).values(cv).returning();
     return newCv;
   }
@@ -142,7 +145,7 @@ export class DatabaseStorage implements IStorage {
     return letter;
   }
 
-  async createCoverLetter(letter: InsertCoverLetter): Promise<CoverLetter> {
+  async createCoverLetter(letter: CreateCoverLetter): Promise<CoverLetter> {
     const [newLetter] = await db.insert(coverLetters).values(letter).returning();
     return newLetter;
   }
@@ -180,7 +183,7 @@ export class DatabaseStorage implements IStorage {
     return conversation;
   }
 
-  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+  async createConversation(conversation: CreateConversation): Promise<Conversation> {
     const [newConversation] = await db.insert(conversations).values(conversation).returning();
     return newConversation;
   }
