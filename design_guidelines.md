@@ -7,10 +7,11 @@
 ## Core Design Elements
 
 ### A. Color Palette
-**Primary Colors:**
-- Dark Mode: 219 91% 15% (deep blue-gray background), 217 32% 95% (crisp white text)
-- Light Mode: 217 32% 17% (dark blue-gray), 0 0% 100% (white background)
-- Brand Accent: 217 91% 60% (professional blue for CTAs and highlights)
+**Neutral Professional Colors:**
+- Dark Mode: 0 0% 9% (deep charcoal background), 0 0% 95% (crisp white text)
+- Light Mode: 0 0% 15% (dark charcoal), 0 0% 100% (pure white background)
+- Brand Accent: 0 0% 25% (professional charcoal for CTAs and highlights)
+- Gray Scale: 0 0% 85% (light gray), 0 0% 65% (medium gray), 0 0% 45% (dark gray)
 
 ### B. Typography
 **Font System**: Inter via Google Fonts CDN
@@ -37,11 +38,12 @@
 ## Page-Specific Guidelines
 
 ### Landing Page
-**Visual Treatment**: Professional and trustworthy
-- Hero: Large centered content with subtle gradient background (219 91% 15% to 219 91% 12%)
-- Sections: Benefits, Features showcase, Social proof, Pricing (4 total)
-- Contrast: High contrast text on dark backgrounds for authority
-- No hero image - focus on clear typography and value proposition
+**Visual Treatment**: Professional, serious and trustworthy
+- Hero: Large centered content with neutral gradient background (0 0% 15% to 0 0% 12%)
+- Sections: Header, Features, Call-to-action, Testimonials, Footer
+- Contrast: High contrast black/white text for credibility and readability
+- Clean typography-focused design without decorative elements
+- Neutral colors throughout: white backgrounds, black/charcoal text, gray accents
 
 ### Dashboard
 **Layout**: Sidebar navigation + main content area

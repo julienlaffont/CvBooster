@@ -1,0 +1,61 @@
+Tu es un développeur full-stack expert et designer UI/UX. Crée une application web SaaS complète qui aide les utilisateurs à améliorer leurs CV et lettres de motivation afin de décrocher des entretiens plus rapidement. L’application doit inclure toutes les fonctionnalités suivantes, dans un design neutre, épuré et professionnel :
+
+1. **Landing page (sérieuse et épurée) :**
+   - Couleurs sobres et neutres : blanc, noir, gris, nuances douces (pas de couleurs vives).
+   - Design minimaliste, élégant et crédible.
+   - Typographie lisible et moderne.
+   - Images et icônes sérieuses (corporate/professionnel).
+   - Sections :
+     - **Header** : titre clair + sous-titre (“Crée ton CV parfait grâce à l’IA et décroche des entretiens plus rapidement”).
+     - **Fonctionnalités** : création de CV, amélioration de lettres, conseils personnalisés, amélioration photo IA.
+     - **Call-to-action** : boutons visibles “Créer mon CV” et “Améliorer ma lettre de motivation”.
+     - **Témoignages / avis** : espace pour retours utilisateurs.
+     - **Footer** : liens (politique de confidentialité, contact, réseaux sociaux).
+
+2. **Dashboard / fonctionnalités principales :**
+   - **Amélioration de CV et lettres de motivation :**
+     - Upload ou rédaction.
+     - Correction, reformulation et optimisation par IA.
+     - **Formatage ATS** : CV générés conformes aux normes des logiciels de recrutement (ATS-friendly).
+   - **Création de CV personnalisé avec IA :**
+     - L’utilisateur fournit ses infos (nom, expériences, compétences, formation, objectifs).
+     - L’IA génère un CV professionnel, à son image, mais optimisé ATS.
+     - L’utilisateur peut donner des instructions (“plus créatif”, “plus formel”, etc.).
+     - Téléchargement PDF, DOCX ou TXT (formats compatibles ATS).
+     - Sauvegarde dans le compte utilisateur.
+   - **Amélioration photo de profil avec IA :**
+     - L’utilisateur peut uploader une photo.
+     - L’IA nettoie l’image (fond neutre, meilleure luminosité).
+     - Possibilité d’appliquer des styles professionnels (costume/cravate, tenue professionnelle féminine, fond sobre).
+     - Résultat = portrait sérieux, crédible et adapté à un CV/LinkedIn.
+   - **Conseils personnalisés :**
+     - Recommandations de l’IA selon poste et secteur visé.
+
+3. **Front-end :**
+   - Développé en React.
+   - Design épuré, professionnel, fluide et responsive.
+   - Navigation intuitive entre landing page et dashboard.
+   - UI simple, accessible à tous.
+
+4. **Back-end :**
+   - Développé en Node.js + Express.
+   - API connectée à ChatGPT/OpenAI pour générer et améliorer CV et lettres.
+   - API de traitement d’images (IA) pour retoucher et améliorer les photos de profil.
+   - Gestion des utilisateurs : inscription, connexion, sauvegarde sécurisée des données.
+   - Base de données (MongoDB ou SQLite) sécurisée.
+
+5. **Design et UX :**
+   - Palette neutre (blanc, gris, noir).
+   - Typographie claire et moderne.
+   - Interface fluide, intuitive, sérieuse et accessible.
+   - Guidance étape par étape avec messages clairs.
+
+6. **Bonus et déploiement :**
+   - Export PDF/DOCX/TXT des CV optimisés ATS.
+   - Option pour sauvegarder plusieurs versions de CV/lettres.
+   - Bouton “Télécharger photo optimisée”.
+   - Instructions pour déployer facilement sur Replit.
+   - Génère tout le code nécessaire front-end, back-end et intégration des API IA.
+
+**Objectif :**
+Créer un SaaS complet et professionnel, avec landing page épurée, dashboard fluide, génération de CV et lettres conformes ATS, et amélioration de photos de profil avec IA pour rendre les utilisateurs plus crédibles et employables.
