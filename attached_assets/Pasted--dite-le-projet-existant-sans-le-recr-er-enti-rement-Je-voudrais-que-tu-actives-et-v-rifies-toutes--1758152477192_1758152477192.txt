@@ -1,0 +1,32 @@
+Édite le projet existant sans le recréer entièrement. Je voudrais que tu actives et vérifies toutes les fonctionnalités de l’application pour qu’elle soit totalement opérationnelle.
+
+1. **Navigation et pages :**
+   - Vérifie que tous les boutons, liens et menus fonctionnent correctement.
+   - Assure-toi que toutes les pages s’ouvrent (landing page, dashboard, création de CV, amélioration de lettres, amélioration photo).
+   - Corrige toutes les redirections si nécessaire.
+
+2. **Fonctionnalités IA :**
+   - Active et teste la génération/amélioration de CV (au format ATS-friendly).
+   - Active et teste la création de lettres de motivation avec l’IA.
+   - Active et teste la création de CV personnalisés avec instructions données par l’utilisateur.
+   - Active et teste l’export des documents (PDF, DOCX, TXT).
+   - Active et teste l’amélioration des photos de profil (fond neutre, retouche professionnelle, costard/tenue sérieuse).
+
+3. **Utilisateurs et données :**
+   - Vérifie l’inscription et la connexion des utilisateurs.
+   - Vérifie que les données (CV, lettres, photos) se sauvegardent correctement dans la base de données.
+   - Vérifie que la récupération et le téléchargement fonctionnent.
+
+4. **Design et cohérence :**
+   - Vérifie que le logo s’affiche bien partout.
+   - Vérifie que les couleurs du site sont harmonisées avec le logo.
+   - Vérifie que la landing page affiche correctement les exemples de CV.
+   - Vérifie que tout reste responsive (desktop + mobile).
+
+5. **Erreurs et stabilité :**
+   - Corrige tout bug ou erreur éventuelle.
+   - Ajoute des messages clairs si une fonctionnalité échoue (par exemple API non disponible).
+   - Assure-toi que toutes les API (ChatGPT/OpenAI + traitement d’images) sont bien intégrées et fonctionnelles.
+
+**Objectif :**
+Finaliser le projet en activant et en testant toutes les fonctionnalités pour que l’application SaaS soit totalement opérationnelle, stable et prête à être utilisée par de vrais utilisateurs.
