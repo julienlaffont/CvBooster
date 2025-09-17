@@ -14,6 +14,13 @@ import {
   updateCvSchema,
   updateCoverLetterSchema 
 } from "@shared/schema";
+import mammoth from "mammoth";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import { jsPDF } from "jspdf";
+
+// Type declarations for modules without types
+declare module 'pdf-parse';
+declare module 'html-pdf-node';
 
 // File upload configuration
 const upload = multer({
@@ -33,16 +40,44 @@ const upload = multer({
 });
 
 // Text extraction function
-function extractTextFromFile(file: Express.Multer.File): string {
-  // For now, we'll handle text files directly
-  // For PDF/DOC files, we'd need additional libraries (pdf-parse, mammoth, etc.)
-  if (file.mimetype === 'text/plain') {
-    return file.buffer.toString('utf-8');
+async function extractTextFromFile(file: Express.Multer.File): Promise<string> {
+  try {
+    if (file.mimetype === 'text/plain') {
+      return file.buffer.toString('utf-8');
+    }
+    
+    if (file.mimetype === 'application/pdf') {
+      try {
+        // Use dynamic import to avoid startup crash
+        const pdfParse = (await import('pdf-parse')).default;
+        const data = await pdfParse(file.buffer);
+        return data.text;
+      } catch (error) {
+        console.error('Error parsing PDF:', error);
+        return `[Erreur lors de l'extraction du PDF: ${file.originalname}]\n\nVeuillez convertir votre fichier en DOCX ou TXT pour une meilleure extraction du texte.`;
+      }
+    }
+    
+    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const result = await mammoth.extractRawText({ buffer: file.buffer });
+      return result.value;
+    }
+    
+    if (file.mimetype === 'application/msword') {
+      // For .doc files, mammoth can handle some cases
+      try {
+        const result = await mammoth.extractRawText({ buffer: file.buffer });
+        return result.value;
+      } catch (error) {
+        return `[Erreur lors de l'extraction du fichier .doc: ${file.originalname}]\n\nVeuillez convertir votre fichier en PDF ou DOCX pour une meilleure extraction du texte.`;
+      }
+    }
+    
+    return `[Type de fichier non pris en charge: ${file.originalname}]\n\nVeuillez utiliser un fichier PDF, DOCX ou TXT.`;
+  } catch (error) {
+    console.error('Error extracting text from file:', error);
+    return `[Erreur lors de l'extraction du texte: ${file.originalname}]\n\nVeuillez vérifier que votre fichier n'est pas corrompu et réessayer.`;
   }
-  
-  // For PDF/DOC files, return a placeholder for now
-  // In a real implementation, you'd use libraries to extract text
-  return `[Contenu extracté du fichier: ${file.originalname}]\n\nVeuillez copier-coller le contenu de votre CV ici pour une analyse complète.`;
 }
 
 // Validation middleware
@@ -84,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title, sector, position } = req.body;
       
       // Extract text content from file
-      const content = extractTextFromFile(req.file);
+      const content = await extractTextFromFile(req.file);
       
       // Create CV with extracted content
       const cv = await storage.createCv({
@@ -116,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title, companyName, position, sector } = req.body;
       
       // Extract text content from file
-      const content = extractTextFromFile(req.file);
+      const content = await extractTextFromFile(req.file);
       
       // Create cover letter with extracted content
       const letter = await storage.createCoverLetter({
@@ -460,6 +495,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error sending message:', error);
       res.status(500).json({ error: 'Failed to send message' });
+    }
+  });
+
+  // ATS-friendly CV Export functionality
+  function formatCvForATS(cv: any): string {
+    // ATS-friendly formatting: preserve structure while keeping it clean
+    let formattedCv = '';
+    
+    // Header with contact info
+    formattedCv += `${cv.title || 'CV'}\n\n`;
+    
+    // Add content with ATS-friendly structure that preserves readability
+    if (cv.content) {
+      // Clean up the content while preserving French characters and structure
+      const cleanContent = cv.content
+        .replace(/[^\p{L}\p{N}\s\-\.@(),:/\n\r•\-+'#&]/gu, ' ')  // Keep Unicode letters, numbers, and critical ATS punctuation like +, #, ', &
+        .replace(/[ \t]+/g, ' ')  // Normalize horizontal whitespace only
+        .replace(/\n{3,}/g, '\n\n')  // Limit consecutive line breaks to max 2
+        .replace(/•/g, '-')  // Convert bullets to ATS-safe dashes
+        .trim();
+        
+      formattedCv += cleanContent;
+    }
+    
+    formattedCv += '\n\n---\n';
+    formattedCv += `Secteur: ${cv.sector || 'Non spécifié'}\n`;
+    formattedCv += `Poste visé: ${cv.position || 'Non spécifié'}\n`;
+    
+    return formattedCv;
+  }
+
+  // Export CV as TXT (most ATS-friendly)
+  app.get('/api/cvs/:id/export/txt', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const cv = await storage.getCv(req.params.id, userId);
+      
+      if (!cv) {
+        return res.status(404).json({ error: 'CV not found' });
+      }
+      
+      const formattedContent = formatCvForATS(cv);
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${cv.title || 'CV'}_ATS.txt"`);
+      res.send(formattedContent);
+    } catch (error) {
+      console.error('Error exporting CV as TXT:', error);
+      res.status(500).json({ error: 'Failed to export CV' });
+    }
+  });
+
+  // Export CV as PDF (ATS-compatible)
+  app.get('/api/cvs/:id/export/pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const cv = await storage.getCv(req.params.id, userId);
+      
+      if (!cv) {
+        return res.status(404).json({ error: 'CV not found' });
+      }
+      
+      const formattedContent = formatCvForATS(cv);
+      
+      // Create ATS-friendly PDF with jsPDF and pagination
+      const doc = new jsPDF();
+      
+      // Use standard fonts for ATS compatibility
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      
+      // Set up pagination parameters
+      const pageHeight = doc.internal.pageSize.height;
+      const lineHeight = 6;
+      const margin = 20;
+      const maxY = pageHeight - margin;
+      let currentY = margin;
+      
+      // Split content into lines for PDF with pagination
+      const lines = doc.splitTextToSize(formattedContent, 170);
+      
+      for (let i = 0; i < lines.length; i++) {
+        // Check if we need a new page
+        if (currentY + lineHeight > maxY) {
+          doc.addPage();
+          currentY = margin;
+        }
+        
+        // Add the line
+        doc.text(lines[i], margin, currentY);
+        currentY += lineHeight;
+      }
+      
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${cv.title || 'CV'}_ATS.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error exporting CV as PDF:', error);
+      res.status(500).json({ error: 'Failed to export CV as PDF' });
+    }
+  });
+
+  // Export CV as DOCX (ATS-compatible)
+  app.get('/api/cvs/:id/export/docx', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const cv = await storage.getCv(req.params.id, userId);
+      
+      if (!cv) {
+        return res.status(404).json({ error: 'CV not found' });
+      }
+      
+      const formattedContent = formatCvForATS(cv);
+      
+      // Create ATS-friendly DOCX document
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: cv.title || 'CV',
+                    bold: true,
+                    size: 32, // 16pt
+                    font: 'Arial' // ATS-friendly font
+                  })
+                ]
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "" })] // Empty line
+              }),
+              ...formattedContent.split('\n').map(line => 
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: line,
+                      font: 'Arial',
+                      size: 22 // 11pt
+                    })
+                  ]
+                })
+              )
+            ]
+          }
+        ]
+      });
+      
+      const buffer = await Packer.toBuffer(doc);
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', `attachment; filename="${cv.title || 'CV'}_ATS.docx"`);
+      res.send(buffer);
+    } catch (error) {
+      console.error('Error exporting CV as DOCX:', error);
+      res.status(500).json({ error: 'Failed to export CV as DOCX' });
     }
   });
 
