@@ -197,7 +197,15 @@ export default function CVWizard() {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la génération du CV');
+        // Extract error message from server response
+        let errorMessage = 'Erreur lors de la génération du CV';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If JSON parsing fails, use default message
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

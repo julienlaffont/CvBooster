@@ -602,10 +602,48 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error('Error generating CV:', error);
-      if (error.message.includes('API key')) {
-        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      
+      // Handle specific OpenAI API errors
+      if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+        return res.status(429).json({ 
+          error: 'Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.',
+          code: 'quota_exceeded'
+        });
       }
-      res.status(500).json({ error: 'Erreur lors de la génération du CV' });
+      
+      if (error.code === 'rate_limit_exceeded' || error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.',
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('API key') || error.code === 'invalid_api_key') {
+        return res.status(500).json({ 
+          error: 'Configuration OpenAI invalide. Veuillez vérifier la clé API.',
+          code: 'config_error'
+        });
+      }
+      
+      if (error.code === 'model_not_found') {
+        return res.status(500).json({ 
+          error: 'Modèle OpenAI non disponible. Veuillez contacter le support.',
+          code: 'model_error'
+        });
+      }
+      
+      // Generic OpenAI error
+      if (error.name === 'OpenAIError' || error.status) {
+        return res.status(500).json({ 
+          error: 'Erreur du service IA. Veuillez réessayer plus tard.',
+          code: 'ai_service_error'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Erreur lors de la génération du CV. Veuillez réessayer.',
+        code: 'generation_error'
+      });
     }
   });
 
@@ -681,10 +719,41 @@ INSTRUCTIONS:
       });
     } catch (error: any) {
       console.error('Error generating cover letter:', error);
-      if (error.message.includes('API key')) {
-        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      
+      // Handle specific OpenAI API errors
+      if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+        return res.status(429).json({ 
+          error: 'Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.',
+          code: 'quota_exceeded'
+        });
       }
-      res.status(500).json({ error: 'Erreur lors de la génération de la lettre' });
+      
+      if (error.code === 'rate_limit_exceeded' || error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.',
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('API key') || error.code === 'invalid_api_key') {
+        return res.status(500).json({ 
+          error: 'Configuration OpenAI invalide. Veuillez vérifier la clé API.',
+          code: 'config_error'
+        });
+      }
+      
+      // Generic OpenAI error
+      if (error.name === 'OpenAIError' || error.status) {
+        return res.status(500).json({ 
+          error: 'Erreur du service IA. Veuillez réessayer plus tard.',
+          code: 'ai_service_error'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Erreur lors de la génération de la lettre. Veuillez réessayer.',
+        code: 'generation_error'
+      });
     }
   });
 
@@ -776,10 +845,41 @@ Fournis une analyse détaillée et constructive en français.`;
       res.status(200).json(analysisResult);
     } catch (error: any) {
       console.error('Error analyzing CV:', error);
-      if (error.message.includes('API key')) {
-        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      
+      // Handle specific OpenAI API errors
+      if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+        return res.status(429).json({ 
+          error: 'Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.',
+          code: 'quota_exceeded'
+        });
       }
-      res.status(500).json({ error: 'Erreur lors de l\'analyse du CV' });
+      
+      if (error.code === 'rate_limit_exceeded' || error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.',
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('API key') || error.code === 'invalid_api_key') {
+        return res.status(500).json({ 
+          error: 'Configuration OpenAI invalide. Veuillez vérifier la clé API.',
+          code: 'config_error'
+        });
+      }
+      
+      // Generic OpenAI error
+      if (error.name === 'OpenAIError' || error.status) {
+        return res.status(500).json({ 
+          error: 'Erreur du service IA. Veuillez réessayer plus tard.',
+          code: 'ai_service_error'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Erreur lors de l\'analyse du CV. Veuillez réessayer.',
+        code: 'analysis_error'
+      });
     }
   });
 
@@ -850,10 +950,41 @@ Fournis des conseils concrets et actionnables adaptés au contexte français.`;
       res.status(200).json(careerAdvice);
     } catch (error: any) {
       console.error('Error generating career advice:', error);
-      if (error.message.includes('API key')) {
-        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      
+      // Handle specific OpenAI API errors
+      if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+        return res.status(429).json({ 
+          error: 'Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.',
+          code: 'quota_exceeded'
+        });
       }
-      res.status(500).json({ error: 'Erreur lors de la génération des conseils' });
+      
+      if (error.code === 'rate_limit_exceeded' || error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.',
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('API key') || error.code === 'invalid_api_key') {
+        return res.status(500).json({ 
+          error: 'Configuration OpenAI invalide. Veuillez vérifier la clé API.',
+          code: 'config_error'
+        });
+      }
+      
+      // Generic OpenAI error
+      if (error.name === 'OpenAIError' || error.status) {
+        return res.status(500).json({ 
+          error: 'Erreur du service IA. Veuillez réessayer plus tard.',
+          code: 'ai_service_error'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Erreur lors de la génération des conseils. Veuillez réessayer.',
+        code: 'advice_error'
+      });
     }
   });
 
@@ -940,10 +1071,41 @@ Sois personnalisé, constructif et motivant.`;
       res.status(200).json(enhancedStats);
     } catch (error: any) {
       console.error('Error generating AI dashboard stats:', error);
-      if (error.message.includes('API key')) {
-        return res.status(500).json({ error: 'Configuration OpenAI manquante' });
+      
+      // Handle specific OpenAI API errors
+      if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+        return res.status(429).json({ 
+          error: 'Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.',
+          code: 'quota_exceeded'
+        });
       }
-      res.status(500).json({ error: 'Erreur lors de la génération des statistiques IA' });
+      
+      if (error.code === 'rate_limit_exceeded' || error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.',
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('API key') || error.code === 'invalid_api_key') {
+        return res.status(500).json({ 
+          error: 'Configuration OpenAI invalide. Veuillez vérifier la clé API.',
+          code: 'config_error'
+        });
+      }
+      
+      // Generic OpenAI error
+      if (error.name === 'OpenAIError' || error.status) {
+        return res.status(500).json({ 
+          error: 'Erreur du service IA. Veuillez réessayer plus tard.',
+          code: 'ai_service_error'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Erreur lors de la génération des statistiques IA. Veuillez réessayer.',
+        code: 'stats_error'
+      });
     }
   });
 
@@ -1036,7 +1198,41 @@ Sois personnalisé, constructif et motivant.`;
       });
     } catch (error: any) {
       console.error('Error analyzing photo:', error);
-      res.status(500).json({ error: 'Erreur lors de l\'analyse de la photo' });
+      
+      // Handle specific OpenAI API errors
+      if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+        return res.status(429).json({ 
+          error: 'Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.',
+          code: 'quota_exceeded'
+        });
+      }
+      
+      if (error.code === 'rate_limit_exceeded' || error.status === 429) {
+        return res.status(429).json({ 
+          error: 'Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.',
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('API key') || error.code === 'invalid_api_key') {
+        return res.status(500).json({ 
+          error: 'Configuration OpenAI invalide. Veuillez vérifier la clé API.',
+          code: 'config_error'
+        });
+      }
+      
+      // Generic OpenAI error
+      if (error.name === 'OpenAIError' || error.status) {
+        return res.status(500).json({ 
+          error: 'Erreur du service IA. Veuillez réessayer plus tard.',
+          code: 'ai_service_error'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Erreur lors de l\'analyse de la photo. Veuillez réessayer.',
+        code: 'photo_analysis_error'
+      });
     }
   });
 
