@@ -50,6 +50,7 @@ function Router() {
       
       {/* Routes accessible to all users */}
       <Route path="/wizard" component={CVWizardPage} />
+      <Route path="/cv-wizard" component={CVWizardPage} />
       <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
       <Route path="/photo" component={PhotoEnhancementPage} />
       <Route path="/chat" component={ChatPage} />

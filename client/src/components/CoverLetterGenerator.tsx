@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useUpgradeModal } from "@/hooks/useUpgradeModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { Sparkles, Save, Download, ArrowRight, Loader2, Building, User, Briefcase, Plus } from "lucide-react";
 
 const SECTORS = [
@@ -40,7 +41,7 @@ export function CoverLetterGenerator() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
-  const { showUpgradeModal } = useUpgradeModal();
+  const { isOpen, upgradeType, showUpgradeModal, closeModal } = useUpgradeModal();
 
   const generateLetter = useMutation({
     mutationFn: async (data: any) => {
@@ -54,28 +55,25 @@ export function CoverLetterGenerator() {
         });
 
         if (!response.ok) {
-          // Handle free limit exceeded specifically before throwing
-          if (response.status === 403) {
-            try {
-              const errorData = await response.json();
-              if (errorData.code === 'free_limit_exceeded') {
-                // Throw a special error that we can catch in onError
-                const specialError = new Error(errorData.error);
-                (specialError as any).isFreeLimit = true;
-                throw specialError;
-              }
-            } catch (parseError) {
-              // If JSON parsing fails, continue with normal error handling
-            }
-          }
-          
-          // For other errors, use standard error handling
-          let errorMessage = response.statusText;
+          // Extract error message from server response
+          let errorMessage = 'Erreur lors de la génération de la lettre';
           try {
             const errorData = await response.json();
+            
+            // Handle free limit exceeded specifically
+            if (response.status === 403 && errorData.code === 'free_limit_exceeded') {
+              const specialError = new Error(errorData.error);
+              (specialError as any).isFreeLimit = true;
+              throw specialError;
+            }
+            
             errorMessage = errorData.error || errorMessage;
-          } catch {
-            // Use default error message
+          } catch (parseError) {
+            // If parseError has isFreeLimit, preserve it
+            if ((parseError as any).isFreeLimit) {
+              throw parseError;
+            }
+            // Otherwise, use default error message
           }
           throw new Error(errorMessage);
         }
@@ -104,7 +102,7 @@ export function CoverLetterGenerator() {
       
       // Handle free limit exceeded specifically
       if (error.isFreeLimit) {
-        showUpgradeModal();
+        showUpgradeModal('cover-letter');
         return; // Don't show toast error for upgrade modal
       }
       
@@ -521,6 +519,13 @@ export function CoverLetterGenerator() {
         )}
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={isOpen} 
+        onClose={closeModal} 
+        type={upgradeType} 
+      />
     </div>
   );
 }

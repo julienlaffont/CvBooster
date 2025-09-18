@@ -20,7 +20,7 @@ const plans = [
       "Export PDF basique",
       "Support email"
     ],
-    cta: "Choisir ce plan",
+    cta: "Commencer gratuitement",
     popular: false
   },
   {

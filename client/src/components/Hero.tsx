@@ -19,7 +19,7 @@ export function Hero() {
       <div className="container mx-auto max-w-6xl text-center">
         <Badge variant="secondary" className="mb-4" data-testid="badge-new">
           <Star className="w-3 h-3 mr-1" />
-          Nouveau: IA GPT-4 intégrée
+          Essai gratuit: 1 CV + 1 lettre
         </Badge>
         
         <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
@@ -31,6 +31,8 @@ export function Hero() {
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Utilise l'intelligence artificielle pour optimiser ton CV et tes lettres de motivation. 
           Reçois des conseils personnalisés selon ton secteur et augmente tes chances de succès.
+          <br />
+          <span className="text-primary font-medium">Commence gratuitement dès maintenant !</span>
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -40,7 +42,7 @@ export function Hero() {
             onClick={handleCVClick}
             data-testid="button-cta-cv"
           >
-            Créer mon CV
+            Essayer gratuitement
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <Button 
@@ -50,7 +52,7 @@ export function Hero() {
             onClick={handleLetterClick}
             data-testid="button-cta-lettre"
           >
-            Améliorer ma lettre de motivation
+            Créer ma lettre gratuite
           </Button>
         </div>
         

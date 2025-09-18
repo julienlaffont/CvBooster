@@ -174,7 +174,7 @@ export function Header() {
                 onClick={() => window.location.href = "/api/login"}
                 data-testid="button-signup"
               >
-                Inscription
+                Essai gratuit
               </Button>
             </>
           )}

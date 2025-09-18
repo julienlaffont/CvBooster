@@ -15,10 +15,16 @@ export function useUpgradeModal() {
     setIsOpen(false);
   };
 
+  const showUpgradeModal = (type?: UpgradeType) => {
+    setUpgradeType(type || 'cv');
+    setIsOpen(true);
+  };
+
   return {
     isOpen,
     upgradeType,
     openModal,
     closeModal,
+    showUpgradeModal,
   };
 }

@@ -12,6 +12,7 @@ import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateCv } from "@/lib/api";
 import { useUpgradeModal } from "@/hooks/useUpgradeModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface PersonalInfo {
   firstName: string;
@@ -92,7 +93,7 @@ export default function CVWizard() {
 
   const createCv = useCreateCv();
   const { toast } = useToast();
-  const { showUpgradeModal } = useUpgradeModal();
+  const { isOpen, upgradeType, showUpgradeModal, closeModal } = useUpgradeModal();
 
   const totalSteps = 6;
   const progress = (currentStep / totalSteps) * 100;
@@ -208,7 +209,7 @@ export default function CVWizard() {
           // Handle free limit exceeded specifically
           if (response.status === 403 && errorData.code === 'free_limit_exceeded') {
             setIsGenerating(false);
-            showUpgradeModal();
+            showUpgradeModal('cv');
             return; // Don't show toast error for upgrade modal
           }
           
@@ -951,6 +952,13 @@ export default function CVWizard() {
         )}
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={isOpen} 
+        onClose={closeModal} 
+        type={upgradeType} 
+      />
     </div>
   );
 }
