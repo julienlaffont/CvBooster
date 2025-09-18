@@ -212,7 +212,6 @@ export function Dashboard() {
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
-                size="sm"
                 onClick={() => handleNewDocument("CV")}
                 data-testid="button-new-cv"
               >
@@ -220,7 +219,6 @@ export function Dashboard() {
                 Nouveau CV
               </Button>
               <Button 
-                size="sm"
                 onClick={() => handleNewDocument("Lettre")}
                 data-testid="button-new-letter"
               >
@@ -295,7 +293,6 @@ export function Dashboard() {
                     />
                     <Button 
                       variant="ghost" 
-                      size="sm" 
                       data-testid="button-upload"
                       onClick={() => document.getElementById('file-upload')?.click()}
                       disabled={uploadingFile}
@@ -351,10 +348,11 @@ export function Dashboard() {
                       <div className="flex items-center gap-2">
                         <Button 
                           variant="ghost" 
-                          size="sm"
+                          size="icon"
                           onClick={() => handleDocumentAction("analyze", doc.id, doc.type as 'CV' | 'Lettre')}
                           disabled={analyzeCv.isPending || analyzeCoverLetter.isPending}
                           data-testid={`button-analyze-${index}`}
+                          aria-label="Analyser"
                         >
                           {(analyzeCv.isPending || analyzeCoverLetter.isPending) ? 
                             <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />
@@ -362,25 +360,28 @@ export function Dashboard() {
                         </Button>
                         <Button 
                           variant="ghost" 
-                          size="sm"
+                          size="icon"
                           onClick={() => handleDocumentAction("view", doc.id, doc.type as 'CV' | 'Lettre')}
                           data-testid={`button-view-${index}`}
+                          aria-label="Voir"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
-                          size="sm"
+                          size="icon"
                           onClick={() => handleDocumentAction("edit", doc.id, doc.type as 'CV' | 'Lettre')}
                           data-testid={`button-edit-${index}`}
+                          aria-label="Éditer"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
-                          size="sm"
+                          size="icon"
                           onClick={() => handleDocumentAction("download", doc.id, doc.type as 'CV' | 'Lettre')}
                           data-testid={`button-download-${index}`}
+                          aria-label="Télécharger"
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -414,7 +415,7 @@ export function Dashboard() {
                 <p className="text-sm text-muted-foreground">
                   Besoin d'aide ? Ton assistant IA est là !
                 </p>
-                <Button className="w-full" size="sm" data-testid="button-chat-ai">
+                <Button className="w-full" data-testid="button-chat-ai">
                   Démarrer une conversation
                 </Button>
               </CardContent>
