@@ -1176,6 +1176,103 @@ Quelle est votre plus grande difficulté actuellement dans vos candidatures ?`
     }
   });
 
+  // Professional Export Demo - Generate sample PDF (no authentication required)
+  app.get('/api/export/demo-pdf', async (req: any, res) => {
+    try {
+      // Create a demo CV for PDF export
+      const demoCV = {
+        title: 'Jean Dupont - Développeur Full Stack',
+        content: `JEAN DUPONT
+📧 jean.dupont@email.com | 📱 06 12 34 56 78 | 💼 LinkedIn: jean-dupont
+
+PROFIL PROFESSIONNEL
+Développeur Full Stack passionné avec 3 ans d'expérience dans la création d'applications web modernes. Spécialisé en React, Node.js et bases de données. Recherche un poste de Lead Developer dans une startup innovante.
+
+EXPÉRIENCE PROFESSIONNELLE
+
+Développeur Full Stack | TechStart SAS | Mars 2022 - Présent
+- Développement d'une plateforme e-commerce avec React et Node.js
+- Amélioration des performances de 40% grâce à l'optimisation du code
+- Formation de 2 développeurs juniors
+- Technologies: React, TypeScript, PostgreSQL, AWS
+
+Développeur Frontend | WebAgency | Janvier 2021 - Février 2022
+- Création de sites web responsives pour 15+ clients
+- Intégration d'APIs REST et GraphQL
+- Collaboration avec l'équipe UX/UI
+- Technologies: Vue.js, Sass, Webpack
+
+FORMATION
+Master Informatique | Université Paris-Saclay | 2020
+Licence Informatique | Université Paris-Saclay | 2018
+
+COMPÉTENCES TECHNIQUES
+- Frontend: React, Vue.js, TypeScript, HTML5, CSS3, Sass
+- Backend: Node.js, Express, Python, Django
+- Bases de données: PostgreSQL, MongoDB, Redis
+- Outils: Git, Docker, AWS, CI/CD
+
+LANGUES
+- Français: Natif
+- Anglais: Courant (TOEIC 850)
+- Espagnol: Intermédiaire
+
+CENTRES D'INTÉRÊT
+Contribution open source, Veille technologique, Escalade`,
+        sector: 'Informatique et Technologies',
+        position: 'Lead Developer'
+      };
+      
+      const formattedContent = formatCvForATS(demoCV);
+      
+      // Create ATS-friendly PDF with jsPDF and pagination
+      const doc = new jsPDF();
+      
+      // Use standard fonts for ATS compatibility
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      
+      // Set up pagination parameters
+      const pageHeight = doc.internal.pageSize.height;
+      const lineHeight = 6;
+      const margin = 20;
+      const maxY = pageHeight - margin;
+      let currentY = margin;
+      
+      // Split content into lines for PDF with pagination
+      const lines = doc.splitTextToSize(formattedContent, 170);
+      
+      for (let i = 0; i < lines.length; i++) {
+        // Check if we need a new page
+        if (currentY + lineHeight > maxY) {
+          doc.addPage();
+          currentY = margin;
+        }
+        
+        // Add the line
+        doc.text(lines[i], margin, currentY);
+        currentY += lineHeight;
+      }
+      
+      // Add demo watermark
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text('Document de démonstration - CVBooster.fr', margin, pageHeight - 10);
+      
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="CV_Demo_CVBooster.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating demo PDF:', error);
+      res.status(500).json({ 
+        error: 'Erreur lors de la génération du PDF de démonstration.',
+        code: 'demo_pdf_error'
+      });
+    }
+  });
+
   // Personalized Career Advice
   app.post('/api/career/advice', isAuthenticated, async (req: any, res) => {
     try {
