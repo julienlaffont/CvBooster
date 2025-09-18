@@ -1176,6 +1176,172 @@ Quelle est votre plus grande difficulté actuellement dans vos candidatures ?`
     }
   });
 
+  // Multi-sector Career Advice Demo (no authentication required)
+  app.post('/api/career/advice/demo', async (req: any, res) => {
+    try {
+      const { currentSector, targetSector, experience, skills, goals } = req.body;
+      
+      if (!currentSector && !targetSector) {
+        return res.status(400).json({ 
+          error: 'Au moins un secteur (actuel ou visé) est requis pour la démo.' 
+        });
+      }
+
+      // For demo: Use mock response if OpenAI quota is exceeded
+      try {
+        const prompt = `Fournis des conseils de carrière personnalisés pour ce profil professionnel français:
+
+PROFIL ACTUEL:
+- Secteur actuel: ${currentSector || 'Non spécifié'}
+- Secteur visé: ${targetSector || 'Non spécifié'}
+- Expérience: ${experience || 'Non spécifié'}
+- Compétences: ${(skills || []).join(', ') || 'Non spécifié'}
+- Objectifs: ${goals || 'Évolution de carrière'}
+
+CONTEXTE DU MARCHÉ FRANÇAIS 2024:
+- Considère les tendances actuelles du marché de l'emploi français
+- Intègre les impacts de la digitalisation et de l'IA
+- Tiens compte des évolutions sectorielles post-COVID
+- Adapte aux spécificités du marché du travail français
+
+CONSEILS DEMANDÉS au format JSON:
+{
+  "marketInsights": "analyse du marché et tendances",
+  "skillsGap": ["compétence manquante 1", "compétence manquante 2", ...],
+  "actionPlan": [
+    {
+      "action": "action à entreprendre",
+      "timeframe": "délai",
+      "priority": "haute|moyenne|faible",
+      "resources": "ressources nécessaires"
+    }
+  ],
+  "certifications": ["certification recommandée 1", ...],
+  "networking": "conseils de réseautage spécifiques",
+  "salaryInsights": "insights sur les salaires et négociation",
+  "nextOpportunities": ["opportunité 1", "opportunité 2", ...]
+}
+
+Fournis des conseils concrets et actionnables adaptés au contexte français.`;
+
+        const openai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+        });
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "Tu es un conseiller en évolution professionnelle expert du marché français. Tu connais les tendances sectorielles, les attentes des employeurs français, et les meilleures stratégies pour réussir sa carrière en France. Tu fournis des conseils pragmatiques et personnalisés."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        });
+
+        const careerAdvice = JSON.parse(response.choices[0]?.message?.content || '{}');
+        
+        res.status(200).json({
+          ...careerAdvice,
+          isDemo: true,
+          note: 'Conseils de carrière de démonstration. Connectez-vous pour des analyses approfondies et sauvegardées.'
+        });
+        
+      } catch (aiError: any) {
+        // If OpenAI is not available, return realistic mock career advice
+        console.log('OpenAI unavailable for demo, using mock career advice');
+        
+        const createMockAdvice = (current: string, target: string) => {
+          const sectorTransitions = {
+            'Informatique': {
+              to: {
+                'Finance': {
+                  marketInsights: 'La FinTech connaît une croissance de 15% par an en France. Les banques digitales recherchent activement des développeurs avec une compréhension du métier financier.',
+                  skillsGap: ['Réglementation financière', 'Sécurité bancaire', 'Blockchain', 'Analyse quantitative'],
+                  networking: 'Participez aux meetups FinTech Paris, rejoignez les associations comme Finance Innovation, suivez les leaders de la FinTech française sur LinkedIn.'
+                },
+                'Santé': {
+                  marketInsights: 'La HealthTech française représente 2,5 milliards d\'euros. Le vieillissement de la population crée de nouveaux besoins en solutions digitales de santé.',
+                  skillsGap: ['Réglementation RGPD santé', 'Normes ISO 27001', 'Interopérabilité des systèmes de santé', 'IA médicale'],
+                  networking: 'Rejoignez France Biotech, participez aux événements Health Tech Hub, connectez-vous avec des professionnels de santé innovants.'
+                }
+              }
+            },
+            'Marketing': {
+              to: {
+                'Informatique': {
+                  marketInsights: 'Les compétences en marketing digital sont très recherchées dans la tech. Le Growth Hacking et l\'analyse de données sont essentiels.',
+                  skillsGap: ['SQL et analyse de données', 'A/B testing', 'Marketing automation', 'Analytics avancé'],
+                  networking: 'Rejoignez les communautés Growth Hacking France, participez aux meetups data marketing, suivez les influenceurs GrowthTech.'
+                }
+              }
+            }
+          };
+
+          const mockAdvice = {
+            marketInsights: `Transition ${current} vers ${target}: Le marché français offre de belles opportunités pour cette évolution. La digitalisation accélère les besoins en profils hybrides maîtrisant les deux secteurs.`,
+            skillsGap: ['Compétences sectorielles spécifiques', 'Certifications professionnelles', 'Connaissance réglementaire', 'Soft skills managériales'],
+            actionPlan: [
+              {
+                action: 'Formation complémentaire dans le secteur cible',
+                timeframe: '3-6 mois',
+                priority: 'haute',
+                resources: 'CNAM, formations en ligne spécialisées, MOOCs sectoriels'
+              },
+              {
+                action: 'Développement du réseau professionnel',
+                timeframe: '6-12 mois',
+                priority: 'haute', 
+                resources: 'LinkedIn, événements sectoriels, associations professionnelles'
+              },
+              {
+                action: 'Acquisition d\'expérience pratique',
+                timeframe: '6-18 mois',
+                priority: 'moyenne',
+                resources: 'Missions freelance, projets personnels, stages courte durée'
+              }
+            ],
+            certifications: ['Certification sectorielle reconnue', 'Formations continues spécialisées', 'Diplôme complémentaire si nécessaire'],
+            networking: 'Participez aux événements sectoriels, rejoignez les associations professionnelles du secteur cible, développez votre présence LinkedIn avec du contenu pertinent.',
+            salaryInsights: `Transition ${current} → ${target}: Préparez-vous à une période d'adaptation salariale. Négociez sur la base de vos compétences transférables et du potentiel d'évolution.`,
+            nextOpportunities: ['Postes de transition hybrides', 'Missions de conseil intersectorielles', 'Startups innovantes aux frontières des secteurs']
+          };
+
+          // Customize based on specific sector transition if available
+          if (sectorTransitions[current]?.to[target]) {
+            const specific = sectorTransitions[current].to[target];
+            mockAdvice.marketInsights = specific.marketInsights;
+            mockAdvice.skillsGap = specific.skillsGap;
+            mockAdvice.networking = specific.networking;
+          }
+
+          return mockAdvice;
+        };
+
+        const mockAdvice = createMockAdvice(currentSector || 'Généraliste', targetSector || currentSector || 'Évolution');
+
+        res.status(200).json({
+          ...mockAdvice,
+          isDemo: true,
+          isMock: true,
+          note: 'Conseils de carrière de démonstration basés sur des données sectorielles françaises. Connectez-vous pour des analyses IA personnalisées.'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in career advice demo:', error);
+      res.status(500).json({ 
+        error: 'Erreur lors de la génération des conseils de carrière. Veuillez réessayer.',
+        code: 'career_advice_demo_error'
+      });
+    }
+  });
+
   // Professional Export Demo - Generate sample PDF (no authentication required)
   app.get('/api/export/demo-pdf', async (req: any, res) => {
     try {
