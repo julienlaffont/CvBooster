@@ -31,6 +31,8 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  freeCvsGenerated: integer("free_cvs_generated").default(0),
+  freeCoverLettersGenerated: integer("free_cover_letters_generated").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
