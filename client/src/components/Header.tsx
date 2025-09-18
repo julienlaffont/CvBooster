@@ -99,16 +99,12 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Link href="#pricing">
-            <span className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-pricing">
-              Tarifs
-            </span>
-          </Link>
-          <Link href="#testimonials">
-            <span className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-testimonials">
-              Témoignages
-            </span>
-          </Link>
+          <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-pricing">
+            Tarifs
+          </a>
+          <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-testimonials">
+            Témoignages
+          </a>
         </nav>
 
         <div className="flex items-center gap-2">
