@@ -1325,6 +1325,59 @@ Sois personnalisé, constructif et motivant.`;
     }
   });
 
+  // AI Photo Enhancement - Demo version (no authentication required)
+  app.post('/api/photo/enhance-demo', photoUpload.single('photo'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucune photo fournie pour l\'amélioration' });
+      }
+
+      // Check file size for demo (limit to 5MB for non-authenticated users)
+      if (req.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Taille de fichier trop importante pour la démo. Limite: 5MB.' });
+      }
+
+      // Professional photo enhancement using Sharp
+      const enhancedImageBuffer = await sharp(req.file.buffer)
+        .resize(512, 512, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .normalize() // Normalize brightness/contrast
+        .sharpen({ sigma: 1.2 }) // Light sharpening for crisp look
+        .modulate({
+          brightness: 1.05, // Slight brightness boost
+          saturation: 1.1,  // Slight saturation boost
+          hue: 0
+        })
+        .jpeg({
+          quality: 92,
+          progressive: true
+        })
+        .toBuffer();
+
+      // Convert enhanced image to base64 data URL
+      const enhancedBase64 = `data:image/jpeg;base64,${enhancedImageBuffer.toString('base64')}`;
+      
+      res.status(200).json({ 
+        enhancedImage: enhancedBase64,
+        message: 'Photo améliorée avec succès (version démo)',
+        improvements: [
+          'Recadrage professionnel (format carré)',
+          'Normalisation de la luminosité et du contraste', 
+          'Amélioration de la netteté',
+          'Optimisation des couleurs',
+          'Compression optimisée pour le web'
+        ],
+        isDemo: true,
+        note: 'Connectez-vous pour sauvegarder et utiliser cette photo comme photo de profil'
+      });
+    } catch (error: any) {
+      console.error('Error enhancing photo (demo):', error);
+      res.status(500).json({ error: 'Erreur lors de l\'amélioration de la photo' });
+    }
+  });
+
   // Apply Enhanced Photo as Profile Picture
   app.post('/api/photo/apply-enhanced', isAuthenticated, async (req: any, res) => {
     try {

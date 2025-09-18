@@ -381,11 +381,20 @@ export function useEnhancePhoto() {
       const formData = new FormData();
       formData.append('photo', photoFile);
       
-      const res = await fetch('/api/photo/enhance', {
+      // Try authenticated endpoint first, fallback to demo endpoint if unauthorized
+      let res = await fetch('/api/photo/enhance', {
         method: 'POST',
         body: formData,
         credentials: 'include',
       });
+      
+      // If unauthorized, try demo endpoint
+      if (res.status === 401) {
+        res = await fetch('/api/photo/enhance-demo', {
+          method: 'POST',
+          body: formData,
+        });
+      }
       
       if (!res.ok) {
         const error = await res.text();
