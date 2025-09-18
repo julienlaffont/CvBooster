@@ -12,6 +12,14 @@ import CVWizardPage from "@/pages/CVWizardPage";
 import CoverLetterGeneratorPage from "@/pages/CoverLetterGeneratorPage";
 import NotFound from "@/pages/not-found";
 
+// Feature pages
+import AnalyseIAPage from "@/pages/features/AnalyseIAPage";
+import LettrePersonnaliseePage from "@/pages/features/LettrePersonnaliseePage";
+import PhotoIAPage from "@/pages/features/PhotoIAPage";
+import ContextingIAPage from "@/pages/features/ContextingIAPage";
+import ExportProfessionnelPage from "@/pages/features/ExportProfessionnelPage";
+import MultisecteurPage from "@/pages/features/MultisecteurPage";
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -31,6 +39,14 @@ function Router() {
     <Switch>
       {/* Public routes */}
       <Route path="/" component={isAuthenticated ? DashboardPage : Home} />
+      
+      {/* Feature pages - accessible to all users */}
+      <Route path="/features/analyse-ia" component={AnalyseIAPage} />
+      <Route path="/features/lettre-personnalisee" component={LettrePersonnaliseePage} />
+      <Route path="/features/photo-ia" component={PhotoIAPage} />
+      <Route path="/features/contexting-ia" component={ContextingIAPage} />
+      <Route path="/features/export-professionnel" component={ExportProfessionnelPage} />
+      <Route path="/features/multisecteur" component={MultisecteurPage} />
       
       {/* Routes accessible to all users */}
       <Route path="/wizard" component={CVWizardPage} />
