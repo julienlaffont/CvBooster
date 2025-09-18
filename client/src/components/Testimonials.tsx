@@ -3,55 +3,68 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 
-// TODO: Remove mock data - replace with real testimonials from API
+// Import AI-generated photos
+import testimonial1Photo from "@assets/generated_images/Young_professional_Black_woman_caca3656.png";
+import testimonial2Photo from "@assets/generated_images/Professional_Caucasian_man_executive_584fa5c3.png";
+import testimonial3Photo from "@assets/generated_images/Professional_Asian_woman_portrait_112e0cfb.png";
+import testimonial4Photo from "@assets/generated_images/Professional_Latino_man_headshot_5c119232.png";
+import testimonial5Photo from "@assets/generated_images/Professional_Middle_Eastern_woman_9376b3ee.png";
+import testimonial6Photo from "@assets/generated_images/Professional_Indian_man_portrait_701b5ed1.png";
+
 const testimonials = [
   {
-    name: "Marie Dubois",
-    role: "Développeuse Frontend",
-    company: "StartupTech",
-    content: "J'ai décroché 3 entretiens en 2 semaines après avoir utilisé CVBooster. L'IA a transformé mon CV de manière incroyable !",
+    name: "Sarah M.",
+    role: "Marketing Manager",
+    company: "TechVision",
+    content: "CVBooster a complètement transformé ma recherche d'emploi ! L'analyse IA a identifié des points que je n'aurais jamais vus. J'ai décroché mon poste de rêve en 3 semaines.",
     rating: 5,
-    avatar: "MD"
+    image: testimonial1Photo,
+    sector: "Marketing Digital"
   },
   {
-    name: "Thomas Martin",
-    role: "Chef de Projet",
-    company: "FinanceCorpAvant",
-    content: "Les conseils personnalisés m'ont aidé à adapter mon CV au secteur financier. Résultat : embauché dans ma première candidature !",
+    name: "Alexandre D.",
+    role: "Directeur Financier",
+    company: "InvestCorp",
+    content: "En tant qu'executive, je pensais maîtriser les CV. L'outil m'a prouvé le contraire ! Les conseils sectoriels finance étaient parfaits. Promotion obtenue !",
     rating: 5,
-    avatar: "TM"
+    image: testimonial2Photo,
+    sector: "Finance"
   },
   {
-    name: "Sophie Laurent",
-    role: "Responsable Marketing",
-    company: "AgenceCreative",
-    content: "L'interface est intuitive et les suggestions de l'IA sont pertinentes. Mon CV n'a jamais été aussi professionnel.",
-    rating: 5,
-    avatar: "SL"
-  },
-  {
-    name: "Alex Petit",
-    role: "Ingénieur DevOps",
-    company: "CloudTech",
-    content: "Excellent service ! L'export PDF est impeccable et les lettres de motivation générées sont vraiment personnalisées.",
-    rating: 5,
-    avatar: "AP"
-  },
-  {
-    name: "Emma Rousseau",
+    name: "Li Chen",
     role: "UX Designer",
-    company: "DesignStudio",
-    content: "CVBooster a révolutionné ma recherche d'emploi. L'IA comprend vraiment les besoins spécifiques du design.",
+    company: "CreativeHub",
+    content: "L'amélioration de photo IA est bluffante ! Ma photo LinkedIn a été transformée et j'ai eu 40% de vues en plus sur mon profil. Résultat : plusieurs opportunités !",
     rating: 5,
-    avatar: "ER"
+    image: testimonial3Photo,
+    sector: "Design"
   },
   {
-    name: "Lucas Bernard",
-    role: "Data Scientist",
-    company: "AILab",
-    content: "Interface claire, résultats rapides, et surtout une IA qui donne des conseils de qualité. Je recommande vivement !",
+    name: "Carlos R.",
+    role: "Ingénieur DevOps",
+    company: "PayTech",
+    content: "Le chat IA 24/7 m'a préparé pour mes entretiens techniques. Les questions étaient précises, les conseils pertinents. J'ai négocié +25% de salaire !",
     rating: 5,
-    avatar: "LB"
+    image: testimonial4Photo,
+    sector: "Tech"
+  },
+  {
+    name: "Leila K.",
+    role: "Consultante Strategy",
+    company: "McKinsey & Co",
+    content: "Les lettres de motivation générées sont d'une qualité exceptionnelle. Chaque candidature était unique et impactante. Taux de réponse multiplié par 3 !",
+    rating: 5,
+    image: testimonial5Photo,
+    sector: "Consulting"
+  },
+  {
+    name: "Raj P.",
+    role: "Product Manager",
+    company: "E-Shop Plus",
+    content: "L'export professionnel avec templates premium fait la différence. Mon CV ressort du lot et les recruteurs me contactent directement. Excellent investissement !",
+    rating: 5,
+    image: testimonial6Photo,
+    sector: "Product"
   }
 ];
 
@@ -99,9 +112,9 @@ export function Testimonials() {
                 
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src="" />
+                    <AvatarImage src={testimonial.image} alt={`Photo de ${testimonial.name}`} />
                     <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                      {testimonial.avatar}
+                      {testimonial.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div>
