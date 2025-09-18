@@ -155,9 +155,32 @@ Réponds de manière personnalisée, pratique et bienveillante. Donne des consei
     });
 
     return response.choices[0].message.content || "Désolé, je n'ai pas pu traiter votre demande.";
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in AI chat:', error);
-    throw new Error("Erreur lors de la conversation avec l'IA");
+    
+    // Handle specific OpenAI API errors
+    if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
+      throw new Error('Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.');
+    }
+    
+    if (error.code === 'rate_limit_exceeded' || error.status === 429) {
+      throw new Error('Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.');
+    }
+    
+    if (error.message?.includes('API key') || error.code === 'invalid_api_key') {
+      throw new Error('Configuration OpenAI invalide. Veuillez vérifier la clé API.');
+    }
+    
+    if (error.code === 'model_not_found') {
+      throw new Error('Modèle OpenAI non disponible. Veuillez contacter le support.');
+    }
+    
+    // Generic OpenAI error
+    if (error.name === 'OpenAIError' || error.status) {
+      throw new Error('Erreur du service IA. Veuillez réessayer plus tard.');
+    }
+    
+    throw new Error("Erreur lors de la conversation avec l'IA. Veuillez réessayer.");
   }
 }
 

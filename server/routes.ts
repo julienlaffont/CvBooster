@@ -509,9 +509,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json({ userMessage, aiMessage });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      res.status(500).json({ error: 'Failed to send message' });
+      
+      // Handle OpenAI-specific errors from chatWithAI function
+      if (error.message?.includes('Quota OpenAI dépassé')) {
+        return res.status(429).json({ 
+          error: error.message,
+          code: 'quota_exceeded'
+        });
+      }
+      
+      if (error.message?.includes('Limite de taux OpenAI')) {
+        return res.status(429).json({ 
+          error: error.message,
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('Configuration OpenAI invalide')) {
+        return res.status(500).json({ 
+          error: error.message,
+          code: 'config_error'
+        });
+      }
+      
+      if (error.message?.includes('Modèle OpenAI non disponible')) {
+        return res.status(500).json({ 
+          error: error.message,
+          code: 'model_error'
+        });
+      }
+      
+      if (error.message?.includes('Erreur du service IA')) {
+        return res.status(500).json({ 
+          error: error.message,
+          code: 'ai_service_error'
+        });
+      }
+      
+      // Generic error
+      res.status(500).json({ 
+        error: error.message || 'Erreur lors de l\'envoi du message. Veuillez réessayer.',
+        code: 'chat_error'
+      });
     }
   });
 

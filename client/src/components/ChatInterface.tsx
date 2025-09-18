@@ -79,11 +79,18 @@ export function ChatInterface() {
         content: messageContent
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      
+      // Extract error message from server response (like in other components)
+      let errorMessage = "Impossible d'envoyer le message. Réessaie dans un moment.";
+      if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer le message. Réessaie dans un moment.",
+        title: "Erreur de conversation",
+        description: errorMessage,
         variant: "destructive"
       });
     }
