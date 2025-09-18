@@ -507,6 +507,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cover Letter Generation - Demo version (no authentication required)
+  app.post('/api/cover-letters/generate-demo', async (req: any, res) => {
+    try {
+      const { cvContent, companyName, position, jobDescription, sector } = req.body;
+      
+      if (!cvContent || !companyName || !position) {
+        return res.status(400).json({ 
+          error: 'Contenu CV, nom de l\'entreprise et poste requis.' 
+        });
+      }
+
+      if (cvContent.trim().length < 50) {
+        return res.status(400).json({ 
+          error: 'Contenu du CV trop court. Minimum 50 caractères requis.' 
+        });
+      }
+
+      // Limit content length for demo
+      if (cvContent.length > 5000) {
+        return res.status(400).json({ 
+          error: 'Contenu du CV trop long pour la démo. Limite: 5000 caractères.' 
+        });
+      }
+
+      // For demo: Use mock generation if OpenAI quota is exceeded
+      try {
+        const generatedContent = await generateCoverLetter(
+          cvContent,
+          companyName,
+          position,
+          jobDescription,
+          sector
+        );
+        
+        res.json({ 
+          content: generatedContent,
+          title: `Lettre - ${companyName}`,
+          companyName,
+          position,
+          sector,
+          isDemo: true,
+          note: 'Connectez-vous pour sauvegarder cette lettre et accéder aux fonctionnalités avancées'
+        });
+      } catch (aiError: any) {
+        // If OpenAI is not available, return a realistic mock cover letter
+        console.log('OpenAI unavailable for demo, using mock cover letter');
+        
+        const mockCoverLetter = `Objet : Candidature pour le poste de ${position}
+
+Madame, Monsieur,
+
+Je vous écris pour exprimer mon vif intérêt pour le poste de ${position} au sein de ${companyName}. Ayant pris connaissance de cette opportunité, je suis convaincu(e) que mon profil correspond parfaitement aux exigences de ce poste.
+
+Fort(e) de mon expérience professionnelle et de mes compétences techniques, je souhaite apporter ma contribution au développement de votre équipe. Mon parcours m'a permis d'acquérir une expertise solide que je serais ravi(e) de mettre au service de ${companyName}.
+
+${sector ? `Passionné(e) par le secteur ${sector.toLowerCase()}, ` : ''}je suis particulièrement motivé(e) par les défis que représente ce poste et les perspectives d'évolution qu'il offre. Ma capacité d'adaptation et mon sens du travail en équipe me permettront de m'intégrer rapidement et efficacement.
+
+Je serais ravi(e) de vous rencontrer pour discuter plus en détail de ma candidature et vous démontrer comment mes compétences peuvent contribuer au succès de vos projets.
+
+Dans l'attente de votre retour, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+Cordialement,
+[Votre nom]`;
+
+        res.json({ 
+          content: mockCoverLetter,
+          title: `Lettre - ${companyName}`,
+          companyName,
+          position,
+          sector,
+          isDemo: true,
+          isMock: true,
+          note: 'Lettre de démonstration. Connectez-vous pour une génération IA personnalisée et complète.'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in cover letter generation demo:', error);
+      res.status(500).json({ 
+        error: 'Erreur lors de la génération de la lettre. Veuillez réessayer.',
+        code: 'cover_letter_generation_error'
+      });
+    }
+  });
+
   // Chat/Conversation Routes
   app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
     try {
