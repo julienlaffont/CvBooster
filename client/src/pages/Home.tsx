@@ -4,6 +4,7 @@ import { CVExamples } from "@/components/CVExamples";
 import { Features } from "@/components/Features";
 import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
+import { FAQ } from "@/components/FAQ";
 import { Footer } from "@/components/Footer";
 
 export default function Home() {
@@ -16,6 +17,7 @@ export default function Home() {
         <Features />
         <Testimonials />
         <Pricing />
+        <FAQ />
       </main>
       <Footer />
     </div>
