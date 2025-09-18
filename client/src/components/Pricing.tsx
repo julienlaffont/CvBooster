@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, Crown, Rocket } from "lucide-react";
+import { Check, Zap, Crown, Rocket, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 
@@ -140,6 +140,165 @@ export function Pricing() {
           ))}
         </div>
 
+        {/* Tableau comparatif */}
+        <div className="mt-20">
+          <div className="text-center mb-12">
+            <h3 className="text-2xl font-bold mb-4">
+              Comparaison détaillée des fonctionnalités
+            </h3>
+            <p className="text-muted-foreground">
+              Trouvez le plan qui correspond parfaitement à vos besoins
+            </p>
+          </div>
+
+          <div className="bg-background rounded-xl border border-border/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full" data-testid="pricing-comparison-table">
+                {/* En-têtes */}
+                <thead className="bg-muted/30 border-b border-border/30">
+                  <tr>
+                    <th className="text-left py-4 px-6 font-medium text-foreground">
+                      Fonctionnalités
+                    </th>
+                    <th className="text-center py-4 px-6">
+                      <div className="flex flex-col items-center">
+                        <Zap className="h-5 w-5 text-primary mb-2" />
+                        <div className="font-semibold text-foreground">Débutant</div>
+                        <div className="text-sm text-muted-foreground">Gratuit</div>
+                      </div>
+                    </th>
+                    <th className="text-center py-4 px-6 relative">
+                      <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs">
+                        Populaire
+                      </Badge>
+                      <div className="flex flex-col items-center">
+                        <Crown className="h-5 w-5 text-primary mb-2" />
+                        <div className="font-semibold text-foreground">Pro</div>
+                        <div className="text-sm text-muted-foreground">20€/mois</div>
+                      </div>
+                    </th>
+                    <th className="text-center py-4 px-6">
+                      <div className="flex flex-col items-center">
+                        <Rocket className="h-5 w-5 text-primary mb-2" />
+                        <div className="font-semibold text-foreground">Expert</div>
+                        <div className="text-sm text-muted-foreground">50€/mois</div>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+
+                {/* Corps du tableau */}
+                <tbody>
+                  <FeatureRow 
+                    feature="Analyse IA avancée" 
+                    basic="1 CV" 
+                    pro="Illimité" 
+                    expert="Illimité + concurrentielle"
+                  />
+                  <FeatureRow 
+                    feature="Lettres personnalisées" 
+                    basic="1 lettre" 
+                    pro="Illimité" 
+                    expert="Illimité + templates exclusifs"
+                  />
+                  <FeatureRow 
+                    feature="Amélioration photo" 
+                    basic={false} 
+                    pro="IA standard" 
+                    expert="IA premium + retouche pro"
+                  />
+                  <FeatureRow 
+                    feature="Export PDF" 
+                    basic="Basique" 
+                    pro="Haute qualité + templates" 
+                    expert="Premium + formats multiples"
+                  />
+                  <FeatureRow 
+                    feature="Chat IA 24/7" 
+                    basic={false} 
+                    pro={true} 
+                    expert={true}
+                  />
+                  <FeatureRow 
+                    feature="Support prioritaire" 
+                    basic="Email standard" 
+                    pro="Email prioritaire" 
+                    expert="Téléphone + email"
+                  />
+                  <FeatureRow 
+                    feature="Optimisation ATS" 
+                    basic={false} 
+                    pro="Basique" 
+                    expert="Avancée + scoring"
+                  />
+                  <FeatureRow 
+                    feature="Coaching carrière 1-à-1" 
+                    basic={false} 
+                    pro={false} 
+                    expert={true}
+                  />
+                  <FeatureRow 
+                    feature="Statistiques avancées" 
+                    basic={false} 
+                    pro={false} 
+                    expert={true}
+                  />
+                  <FeatureRow 
+                    feature="API accès" 
+                    basic={false} 
+                    pro={false} 
+                    expert={true}
+                  />
+                </tbody>
+              </table>
+            </div>
+
+            {/* CTAs dans le tableau */}
+            <div className="bg-muted/10 border-t border-border/30 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                <div className="font-medium text-foreground">
+                  Prêt à commencer ?
+                </div>
+                <div className="text-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    asChild
+                    data-testid="table-cta-debutant"
+                  >
+                    <Link href={isAuthenticated ? "/dashboard" : "/wizard"}>
+                      Essayer gratuitement
+                    </Link>
+                  </Button>
+                </div>
+                <div className="text-center">
+                  <Button 
+                    size="sm" 
+                    asChild
+                    data-testid="table-cta-pro"
+                  >
+                    <Link href={isAuthenticated ? "/dashboard" : "/wizard"}>
+                      Choisir Pro
+                    </Link>
+                  </Button>
+                </div>
+                <div className="text-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    asChild
+                    data-testid="table-cta-expert"
+                  >
+                    <Link href={isAuthenticated ? "/dashboard" : "/wizard"}>
+                      Choisir Expert
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="text-center mt-12">
           <p className="text-sm text-muted-foreground">
             Tous les plans incluent un essai gratuit de 7 jours • Annulation facile à tout moment
@@ -147,5 +306,47 @@ export function Pricing() {
         </div>
       </div>
     </section>
+  );
+}
+
+// Composant pour les lignes du tableau
+function FeatureRow({ feature, basic, pro, expert }: { 
+  feature: string; 
+  basic: boolean | string; 
+  pro: boolean | string; 
+  expert: boolean | string; 
+}) {
+  return (
+    <tr className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+      <td className="py-4 px-6 font-medium text-foreground">
+        {feature}
+      </td>
+      <td className="py-4 px-6 text-center">
+        <FeatureCell value={basic} />
+      </td>
+      <td className="py-4 px-6 text-center">
+        <FeatureCell value={pro} />
+      </td>
+      <td className="py-4 px-6 text-center">
+        <FeatureCell value={expert} />
+      </td>
+    </tr>
+  );
+}
+
+// Composant pour les cellules de fonctionnalités
+function FeatureCell({ value }: { value: boolean | string }) {
+  if (typeof value === 'boolean') {
+    return value ? (
+      <Check className="h-5 w-5 text-primary mx-auto" />
+    ) : (
+      <X className="h-4 w-4 text-muted-foreground mx-auto" />
+    );
+  }
+  
+  return (
+    <span className="text-sm text-foreground font-medium">
+      {value}
+    </span>
   );
 }
