@@ -521,8 +521,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { personalInfo, experiences, education, skills, languages, certifications, sector, targetPosition } = req.body;
       
+      // Debug logging to identify missing fields
+      console.log('CV Generate Request Data:');
+      console.log('personalInfo:', JSON.stringify(personalInfo, null, 2));
+      console.log('sector:', sector);
+      console.log('targetPosition:', targetPosition);
+      console.log('personalInfo?.firstName:', personalInfo?.firstName);
+      console.log('personalInfo?.lastName:', personalInfo?.lastName);
+      
       // Validate required fields
       if (!personalInfo?.firstName || !personalInfo?.lastName || !sector || !targetPosition) {
+        console.log('Validation failed - missing required fields');
         return res.status(400).json({ error: 'Informations obligatoires manquantes' });
       }
 
