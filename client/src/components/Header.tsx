@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Moon, Sun } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Moon, Sun, ChevronDown, Brain, FileText, Camera, MessageSquare, Download, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,11 +37,68 @@ export function Header() {
         </Link>
         
         <nav className="hidden md:flex items-center gap-6">
-          <Link href="#features">
-            <span className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-features">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="dropdown-features">
               Fonctionnalités
-            </span>
-          </Link>
+              <ChevronDown className="h-3 w-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-60">
+              <DropdownMenuItem asChild>
+                <Link href="/features/analyse-ia" className="flex items-center gap-2 w-full">
+                  <Brain className="h-4 w-4 text-primary" />
+                  <div>
+                    <div className="font-medium">Analyse IA</div>
+                    <div className="text-xs text-muted-foreground">Optimise ton CV avec l'IA</div>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/features/lettre-personnalisee" className="flex items-center gap-2 w-full">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <div>
+                    <div className="font-medium">Lettres Personnalisées</div>
+                    <div className="text-xs text-muted-foreground">Génère des lettres uniques</div>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/features/photo-ia" className="flex items-center gap-2 w-full">
+                  <Camera className="h-4 w-4 text-primary" />
+                  <div>
+                    <div className="font-medium">Photo Pro IA</div>
+                    <div className="text-xs text-muted-foreground">Améliore ta photo de profil</div>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/features/contexting-ia" className="flex items-center gap-2 w-full">
+                  <MessageSquare className="h-4 w-4 text-primary" />
+                  <div>
+                    <div className="font-medium">Coaching IA 24/7</div>
+                    <div className="text-xs text-muted-foreground">Assistant virtuel disponible</div>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/features/export-professionnel" className="flex items-center gap-2 w-full">
+                  <Download className="h-4 w-4 text-primary" />
+                  <div>
+                    <div className="font-medium">Export Professionnel</div>
+                    <div className="text-xs text-muted-foreground">PDF haute qualité</div>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/features/multisecteur" className="flex items-center gap-2 w-full">
+                  <Users className="h-4 w-4 text-primary" />
+                  <div>
+                    <div className="font-medium">Multi-secteurs</div>
+                    <div className="text-xs text-muted-foreground">Conseils pour tous les métiers</div>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Link href="#pricing">
             <span className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-pricing">
               Tarifs
