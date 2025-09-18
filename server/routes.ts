@@ -22,6 +22,32 @@ import OpenAI from "openai";
 
 // Note: pdf-parse is dynamically imported in extractTextFromFile function
 
+// Simple cache for demo responses to improve performance
+const demoCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+
+function getCachedResponse(key: string): any | null {
+  const cached = demoCache.get(key);
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
+    return cached.data;
+  }
+  demoCache.delete(key);
+  return null;
+}
+
+function setCachedResponse(key: string, data: any, ttlMs = 300000): void { // 5 minute default TTL
+  demoCache.set(key, { data, timestamp: Date.now(), ttl: ttlMs });
+  
+  // Simple cleanup: remove old entries when cache gets large
+  if (demoCache.size > 100) {
+    const now = Date.now();
+    for (const [k, v] of demoCache.entries()) {
+      if (now - v.timestamp > v.ttl) {
+        demoCache.delete(k);
+      }
+    }
+  }
+}
+
 // File upload configuration
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1187,6 +1213,19 @@ Quelle est votre plus grande difficulté actuellement dans vos candidatures ?`
         });
       }
 
+      // Create cache key based on input parameters
+      const cacheKey = `career-advice:${currentSector || 'none'}:${targetSector || 'none'}:${(skills || []).join(',')}`;
+      
+      // Check cache first for improved performance
+      const cachedResponse = getCachedResponse(cacheKey);
+      if (cachedResponse) {
+        return res.json({
+          ...cachedResponse,
+          cached: true,
+          note: 'Conseils de carrière de démonstration (depuis cache). Connectez-vous pour des analyses IA personnalisées.'
+        });
+      }
+
       // For demo: Use mock response if OpenAI quota is exceeded
       try {
         const prompt = `Fournis des conseils de carrière personnalisés pour ce profil professionnel français:
@@ -1247,11 +1286,16 @@ Fournis des conseils concrets et actionnables adaptés au contexte français.`;
 
         const careerAdvice = JSON.parse(response.choices[0]?.message?.content || '{}');
         
-        res.status(200).json({
+        const responseData = {
           ...careerAdvice,
           isDemo: true,
           note: 'Conseils de carrière de démonstration. Connectez-vous pour des analyses approfondies et sauvegardées.'
-        });
+        };
+
+        // Cache the OpenAI response for improved performance
+        setCachedResponse(cacheKey, responseData);
+        
+        res.status(200).json(responseData);
         
       } catch (aiError: any) {
         // If OpenAI is not available, return realistic mock career advice
@@ -1326,12 +1370,17 @@ Fournis des conseils concrets et actionnables adaptés au contexte français.`;
 
         const mockAdvice = createMockAdvice(currentSector || 'Généraliste', targetSector || currentSector || 'Évolution');
 
-        res.status(200).json({
+        const responseData = {
           ...mockAdvice,
           isDemo: true,
           isMock: true,
           note: 'Conseils de carrière de démonstration basés sur des données sectorielles françaises. Connectez-vous pour des analyses IA personnalisées.'
-        });
+        };
+
+        // Cache the response for improved performance  
+        setCachedResponse(cacheKey, responseData);
+
+        res.status(200).json(responseData);
       }
     } catch (error: any) {
       console.error('Error in career advice demo:', error);
