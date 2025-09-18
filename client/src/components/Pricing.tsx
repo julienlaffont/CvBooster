@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Zap, Crown, Rocket } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "wouter";
 
 const plans = [
   {
-    name: "Essentiel",
+    name: "Débutant",
     price: "0€",
     period: "Gratuit",
     description: "Parfait pour commencer",
@@ -18,12 +20,12 @@ const plans = [
       "Export PDF basique",
       "Support email"
     ],
-    cta: "Commencer gratuitement",
+    cta: "Choisir ce plan",
     popular: false
   },
   {
     name: "Pro",
-    price: "19€",
+    price: "20€",
     period: "par mois",
     description: "Idéal pour une recherche active",
     icon: Crown,
@@ -37,12 +39,12 @@ const plans = [
       "Chat IA 24/7",
       "Support prioritaire"
     ],
-    cta: "Essayer Pro",
+    cta: "Choisir ce plan",
     popular: true
   },
   {
     name: "Expert",
-    price: "39€",
+    price: "50€",
     period: "par mois",
     description: "Pour les professionnels exigeants",
     icon: Rocket,
@@ -57,15 +59,13 @@ const plans = [
       "Statistiques avancées",
       "Support téléphonique"
     ],
-    cta: "Choisir Expert",
+    cta: "Choisir ce plan",
     popular: false
   }
 ];
 
 export function Pricing() {
-  const handlePlanSelect = (planName: string) => {
-    console.log(`${planName} plan selected`);
-  };
+  const { isAuthenticated } = useAuth();
 
   return (
     <section id="pricing" className="py-20 px-4 bg-muted/30">
@@ -117,10 +117,12 @@ export function Pricing() {
                 <Button 
                   className={`w-full ${plan.popular ? '' : 'variant-outline'}`}
                   variant={plan.popular ? 'default' : 'outline'}
-                  onClick={() => handlePlanSelect(plan.name)}
+                  asChild
                   data-testid={`button-select-${plan.name.toLowerCase()}`}
                 >
-                  {plan.cta}
+                  <Link href={isAuthenticated ? "/dashboard" : "/wizard"}>
+                    {plan.cta}
+                  </Link>
                 </Button>
 
                 <div className="space-y-3">
