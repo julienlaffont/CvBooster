@@ -851,11 +851,11 @@ export default function CVWizard() {
       case 3: // Education  
         return cvData.education.length > 0;
       case 4: // Skills & Sector
-        return !!(cvData.sector.trim() && cvData.targetPosition.trim());
-      case 5: // Skills
-        return cvData.skills.length > 0;
-      case 6: // Languages & Certifications
+        return !!(cvData.sector.trim() && cvData.targetPosition.trim() && cvData.skills.length > 0);
+      case 5: // Languages & Certifications
         return true; // Optional step
+      case 6: // Final step
+        return true;
       default:
         return true;
     }
