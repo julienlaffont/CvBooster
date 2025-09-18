@@ -1,0 +1,36 @@
+Édite le projet existant sans le recréer entièrement. Je voudrais que tu modifies la landing page et le menu de navigation pour activer et structurer correctement les sections Fonctionnalités, Tarifs et Témoignages. Voici les changements précis : 
+
+1. **Menu Fonctionnalités :**
+   - Quand on clique sur “Fonctionnalités”, cela doit afficher une liste cliquable de toutes les fonctionnalités.
+   - Chaque fonctionnalité doit être cliquable et ouvrir une page dédiée qui explique et active la fonctionnalité correspondante.
+   - Liste des fonctionnalités à afficher :
+     - Analyse IA Intelligente
+     - Lettre Personnalisée
+     - Amélioration Photo IA
+     - Contexting IA
+     - Export Professionnel
+     - Multisecteur
+
+2. **Menu Tarifs :**
+   - Quand on clique sur “Tarifs”, cela doit afficher 3 plans distincts sous forme de cartes ou colonnes.
+   - Plans à inclure :
+     - **Débutant** : Gratuit, accès limité à quelques fonctionnalités.
+     - **Pro** : 20€/mois, accès complet aux fonctionnalités principales.
+     - **Expert** : 50€/mois, accès illimité à toutes les fonctionnalités premium.
+   - Chaque plan doit avoir un bouton CTA (“Choisir ce plan”) qui redirige vers l’inscription/connexion.
+
+3. **Menu Témoignages :**
+   - Quand on clique sur “Témoignages”, cela doit afficher plusieurs témoignages d’utilisateurs satisfaits.
+   - Inclure du texte et des photos générées par IA de personnes réelles (hommes et femmes de styles variés, habillés de manière professionnelle).
+   - Les témoignages doivent paraître authentiques, par exemple :
+     - “Grâce à cet outil, j’ai trouvé un poste en moins de deux semaines !” – Claire, 29 ans.
+     - “Mon CV a enfin passé les filtres ATS et j’ai décroché un entretien.” – Marc, 35 ans.
+   - Dispose les témoignages de manière élégante (par exemple en grille avec photos rondes et textes en dessous).
+
+4. **Cohérence et design :**
+   - Les nouvelles pages doivent respecter le style existant (palette neutre, design épuré, professionnel).
+   - Navigation fluide et responsive (mobile + desktop).
+   - Assure-toi que chaque onglet du menu fonctionne correctement et affiche bien son contenu.
+
+**Objectif :**
+Améliorer la navigation et l’expérience utilisateur en rendant les menus Fonctionnalités, Tarifs et Témoignages interactifs, cliquables et riches en contenu, tout en respectant l’identité visuelle du SaaS.
