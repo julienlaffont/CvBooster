@@ -1,43 +1,50 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Brain, FileText, MessageSquare, Download, Users, Zap, Camera } from "lucide-react";
+import { Link } from "wouter";
 
 const features = [
   {
     icon: Brain,
     title: "Analyse IA Intelligente",
     description: "Notre IA analyse ton CV et identifie les points d'amélioration selon les standards du recrutement moderne.",
-    badge: "IA GPT-4"
+    badge: "IA GPT-4",
+    link: "/features/analyse-ia"
   },
   {
     icon: FileText,
     title: "Lettres Personnalisées",
     description: "Génère des lettres de motivation adaptées à chaque poste et secteur d'activité.",
-    badge: "Automatique"
+    badge: "Automatique",
+    link: "/features/lettre-personnalisee"
   },
   {
     icon: Camera,
     title: "Amélioration Photo IA",
     description: "Optimise ta photo de profil avec l'IA : fond neutre, luminosité professionnelle et style corporate.",
-    badge: "Photo Pro"
+    badge: "Photo Pro",
+    link: "/features/photo-ia"
   },
   {
     icon: MessageSquare,
     title: "Coaching IA 24/7",
     description: "Un assistant virtuel disponible à tout moment pour répondre à tes questions et te guider.",
-    badge: "Chat en direct"
+    badge: "Chat en direct",
+    link: "/features/contexting-ia"
   },
   {
     icon: Download,
     title: "Export Professionnel",
     description: "Télécharge tes documents optimisés en PDF avec des templates modernes et élégants.",
-    badge: "PDF HD"
+    badge: "PDF HD",
+    link: "/features/export-professionnel"
   },
   {
     icon: Users,
     title: "Multi-secteurs",
     description: "Conseils adaptés à ton domaine : Tech, Marketing, Finance, Santé, et bien plus.",
-    badge: "50+ secteurs"
+    badge: "50+ secteurs",
+    link: "/features/multisecteur"
   }
 ];
 
@@ -57,28 +64,29 @@ export function Features() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card 
-              key={index} 
-              className="hover-elevate transition-all duration-300 cursor-pointer group"
-              data-testid={`card-feature-${index}`}
-            >
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
-                    <feature.icon className="h-5 w-5" />
+            <Link key={index} href={feature.link}>
+              <Card 
+                className="hover-elevate transition-all duration-300 cursor-pointer group h-full"
+                data-testid={`card-feature-${index}`}
+              >
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                      <feature.icon className="h-5 w-5" />
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {feature.badge}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {feature.badge}
-                  </Badge>
-                </div>
-                <CardTitle className="text-lg">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </CardContent>
-            </Card>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </div>
