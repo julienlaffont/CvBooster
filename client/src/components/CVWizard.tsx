@@ -838,6 +838,39 @@ export default function CVWizard() {
     );
   }
 
+  // Validation function for each step
+  const canContinueToNextStep = (): boolean => {
+    switch (currentStep) {
+      case 1: // Personal Info
+        return !!(cvData.personalInfo.firstName.trim() && 
+                 cvData.personalInfo.lastName.trim() && 
+                 cvData.personalInfo.email.trim());
+      case 2: // Experience
+        return cvData.experiences.length > 0;
+      case 3: // Education  
+        return cvData.education.length > 0;
+      case 4: // Skills & Sector
+        return !!(cvData.sector.trim() && cvData.targetPosition.trim());
+      case 5: // Skills
+        return cvData.skills.length > 0;
+      case 6: // Languages & Certifications
+        return true; // Optional step
+      default:
+        return true;
+    }
+  };
+
+  const canGenerateCV = (): boolean => {
+    return !!(cvData.personalInfo.firstName.trim() && 
+             cvData.personalInfo.lastName.trim() && 
+             cvData.personalInfo.email.trim() && 
+             cvData.sector.trim() && 
+             cvData.targetPosition.trim() &&
+             cvData.experiences.length > 0 &&
+             cvData.education.length > 0 &&
+             cvData.skills.length > 0);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -877,7 +910,7 @@ export default function CVWizard() {
         {currentStep === totalSteps ? (
           <Button
             onClick={generateCV}
-            disabled={isGenerating}
+            disabled={isGenerating || !canGenerateCV()}
             className="gap-2"
             data-testid="button-generate-cv"
           >
@@ -887,7 +920,7 @@ export default function CVWizard() {
         ) : (
           <Button
             onClick={() => setCurrentStep(prev => Math.min(totalSteps, prev + 1))}
-            disabled={currentStep === totalSteps}
+            disabled={currentStep === totalSteps || !canContinueToNextStep()}
             className="gap-2"
             data-testid="button-next-step"
           >
