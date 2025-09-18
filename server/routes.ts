@@ -1095,6 +1095,87 @@ Fournis une analyse détaillée et constructive en français.`;
     }
   });
 
+  // AI Chat/Coaching - Demo version (no authentication required)
+  app.post('/api/chat/demo', async (req: any, res) => {
+    try {
+      const { message, userContext } = req.body;
+      
+      if (!message || message.trim().length === 0) {
+        return res.status(400).json({ 
+          error: 'Message requis pour le coaching IA.' 
+        });
+      }
+
+      if (message.length > 1000) {
+        return res.status(400).json({ 
+          error: 'Message trop long pour la démo. Limite: 1000 caractères.' 
+        });
+      }
+
+      // For demo: Use mock response if OpenAI quota is exceeded
+      try {
+        const chatHistory = [{ role: 'user' as const, content: message }];
+        const aiResponse = await chatWithAI(chatHistory, userContext);
+        
+        res.json({ 
+          response: aiResponse,
+          isDemo: true,
+          note: 'Session de coaching de démonstration. Connectez-vous pour des conversations personnalisées et sauvegardées.'
+        });
+      } catch (aiError: any) {
+        // If OpenAI is not available, return a realistic mock coaching response
+        console.log('OpenAI unavailable for demo, using mock coaching response');
+        
+        const mockResponses = [
+          `Merci de votre question ! Pour vous aider au mieux dans votre recherche d'emploi, je vous recommande de :
+
+1. **Personnaliser votre CV** pour chaque poste en adaptant les mots-clés et l'expérience mise en avant
+2. **Préparer vos entretiens** en recherchant l'entreprise et en préparant des exemples concrets de vos réalisations
+3. **Développer votre réseau professionnel** via LinkedIn et les événements de votre secteur
+
+Avez-vous un CV que vous aimeriez améliorer ou une candidature spécifique en cours ?`,
+
+          `Excellente question ! Le marché de l'emploi évolue constamment. Voici quelques conseils clés :
+
+• **Mettez en avant vos compétences transférables** - elles sont souvent plus valorisées que l'expérience directe
+• **Optimisez votre présence en ligne** - Un profil LinkedIn à jour peut faire la différence
+• **Préparez un pitch de 30 secondes** sur qui vous êtes et ce que vous apportez
+
+Dans quel secteur cherchez-vous à évoluer ? Je peux vous donner des conseils plus spécifiques.`,
+
+          `C'est un défi commun ! Voici comment structurer une approche efficace :
+
+**Pour votre CV :**
+- Utilisez des verbes d'action et quantifiez vos résultats
+- Adaptez le contenu à chaque offre d'emploi
+- Gardez une mise en page claire et professionnelle
+
+**Pour vos candidatures :**
+- Rédigez des lettres de motivation personnalisées
+- Montrez votre connaissance de l'entreprise
+- Mettez en avant votre valeur ajoutée unique
+
+Quelle est votre plus grande difficulté actuellement dans vos candidatures ?`
+        ];
+
+        const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+
+        res.json({ 
+          response: randomResponse,
+          isDemo: true,
+          isMock: true,
+          note: 'Réponse de démonstration. Connectez-vous pour un coaching IA personnalisé et complet.'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in chat demo:', error);
+      res.status(500).json({ 
+        error: 'Erreur lors du coaching IA. Veuillez réessayer.',
+        code: 'chat_demo_error'
+      });
+    }
+  });
+
   // Personalized Career Advice
   app.post('/api/career/advice', isAuthenticated, async (req: any, res) => {
     try {
