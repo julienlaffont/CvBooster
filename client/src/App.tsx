@@ -52,12 +52,12 @@ function Router() {
       <Route path="/wizard" component={CVWizardPage} />
       <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
       <Route path="/photo" component={PhotoEnhancementPage} />
+      <Route path="/chat" component={ChatPage} />
       
       {/* Protected routes for authenticated users only */}
       {isAuthenticated && (
         <>
           <Route path="/dashboard" component={DashboardPage} />
-          <Route path="/chat" component={ChatPage} />
         </>
       )}
       <Route component={NotFound} />

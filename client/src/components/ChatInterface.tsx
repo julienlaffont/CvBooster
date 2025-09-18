@@ -36,6 +36,8 @@ const formatDate = (dateString: string | Date | null) => {
 export function ChatInterface() {
   const [inputValue, setInputValue] = useState("");
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [demoMessages, setDemoMessages] = useState<Message[]>([]);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   
@@ -49,12 +51,61 @@ export function ChatInterface() {
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     
+    const messageContent = inputValue;
+    setInputValue("");
+    
     if (!isAuthenticated) {
-      toast({
-        title: "Authentification requise",
-        description: "Connecte-toi pour utiliser l'assistant IA.",
-        variant: "destructive"
-      });
+      // Demo mode for non-authenticated users
+      const userMessage: Message = {
+        id: `demo-user-${Date.now()}`,
+        content: messageContent,
+        role: 'user',
+        createdAt: new Date().toISOString()
+      };
+      
+      setDemoMessages(prev => [...prev, userMessage]);
+      setIsDemoLoading(true);
+      
+      try {
+        const response = await fetch('/api/chat/demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: messageContent })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Erreur lors de la communication avec l\'IA');
+        }
+        
+        const data = await response.json();
+        
+        const aiMessage: Message = {
+          id: `demo-ai-${Date.now()}`,
+          content: data.response,
+          role: 'assistant',
+          createdAt: new Date().toISOString()
+        };
+        
+        setDemoMessages(prev => [...prev, aiMessage]);
+        
+        if (data.isDemo && data.isMock) {
+          toast({
+            title: "Mode démonstration",
+            description: "Réponse de démonstration. Connectez-vous pour un coaching personnalisé."
+          });
+        }
+        
+      } catch (error: any) {
+        console.error('Error in demo chat:', error);
+        toast({
+          title: "Erreur de démonstration",
+          description: "Impossible de communiquer avec l'IA. Réessayez dans un moment.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsDemoLoading(false);
+      }
+      
       return;
     }
 
@@ -70,8 +121,7 @@ export function ChatInterface() {
         setCurrentConversationId(conversationId);
       }
 
-      const messageContent = inputValue;
-      setInputValue("");
+      // messageContent already defined above
 
       // Send message to API
       await sendMessage.mutateAsync({
@@ -111,7 +161,10 @@ export function ChatInterface() {
     }
   }, [isAuthenticated, conversations, currentConversationId]);
   
-  const isLoading = sendMessage.isPending || createConversation.isPending;
+  const isLoading = sendMessage.isPending || createConversation.isPending || isDemoLoading;
+  
+  // Get appropriate messages based on authentication status
+  const currentMessages = isAuthenticated ? messages : demoMessages;
 
   return (
     <Card className="flex flex-col h-[600px]">
@@ -136,29 +189,23 @@ export function ChatInterface() {
       <CardContent className="flex-1 flex flex-col p-0">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4" data-testid="chat-messages">
-          {!isAuthenticated ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <Bot className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Assistant IA CVBooster</h3>
-              <p className="text-muted-foreground mb-4">
-                Connecte-toi pour commencer une conversation avec l'IA et recevoir des conseils personnalisés.
-              </p>
-              <Button asChild>
-                <a href="/api/login" data-testid="button-login-chat">
-                  Se connecter
-                </a>
-              </Button>
-            </div>
-          ) : messages.length === 0 ? (
+          {currentMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
               <Bot className="h-16 w-16 text-primary mb-4" />
               <h3 className="font-semibold text-lg mb-2">Bonjour !</h3>
               <p className="text-muted-foreground mb-4">
                 Je suis ton assistant IA CVBooster. Pose-moi tes questions sur ton CV, tes lettres de motivation ou ta recherche d'emploi !
               </p>
+              {!isAuthenticated && (
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    💡 Mode démonstration actif. <a href="/api/login" className="underline font-medium">Connectez-vous</a> pour un coaching personnalisé.
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
-            messages.map((message) => (
+            currentMessages.map((message) => (
               <div
                 key={message.id}
                 className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -224,22 +271,27 @@ export function ChatInterface() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={isAuthenticated ? "Pose ta question à l'IA..." : "Connecte-toi pour discuter avec l'IA"}
-              disabled={isLoading || !isAuthenticated}
+              placeholder={isAuthenticated ? "Pose ta question à l'IA..." : "Testez l'IA en mode démo..."}
+              disabled={isLoading}
               data-testid="input-chat-message"
               className="flex-1"
             />
             <Button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading || !isAuthenticated}
+              disabled={!inputValue.trim() || isLoading}
               size="icon"
               data-testid="button-send-message"
             >
-              <Send className="h-4 w-4" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             Appuie sur Entrée pour envoyer • L'IA peut faire des erreurs
+            {!isAuthenticated && " • Mode démonstration"}
           </p>
         </div>
       </CardContent>
