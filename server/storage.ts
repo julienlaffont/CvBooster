@@ -20,7 +20,7 @@ import {
   type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -228,6 +228,48 @@ export class DatabaseStorage implements IStorage {
   async createMessage(message: InsertMessage): Promise<Message> {
     const [newMessage] = await db.insert(messages).values(message).returning();
     return newMessage;
+  }
+
+  // Free trial usage tracking
+  async canUserGenerateFreeCv(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+    return (user.freeCvsGenerated || 0) < 1;
+  }
+
+  async canUserGenerateFreeCoverLetter(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+    return (user.freeCoverLettersGenerated || 0) < 1;
+  }
+
+  async incrementFreeCvUsage(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        freeCvsGenerated: sql`${users.freeCvsGenerated} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async incrementFreeCoverLetterUsage(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        freeCoverLettersGenerated: sql`${users.freeCoverLettersGenerated} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async getUserFreeTrialStatus(userId: string): Promise<{ freeCvsGenerated: number; freeCoverLettersGenerated: number } | null> {
+    const user = await this.getUser(userId);
+    if (!user) return null;
+    return {
+      freeCvsGenerated: user.freeCvsGenerated || 0,
+      freeCoverLettersGenerated: user.freeCoverLettersGenerated || 0
+    };
   }
 }
 
