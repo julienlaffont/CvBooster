@@ -764,6 +764,16 @@ Cordialement,
         });
       }
 
+      // Check if user can generate a free CV
+      const canGenerateFreeCv = await storage.canUserGenerateFreeCv(userId);
+      if (!canGenerateFreeCv) {
+        return res.status(403).json({ 
+          error: 'Vous avez épuisé votre génération de CV gratuite. Choisissez un plan pour continuer.',
+          code: 'free_limit_exceeded',
+          type: 'cv'
+        });
+      }
+
       const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
       });
@@ -832,6 +842,9 @@ INSTRUCTIONS:
 
       const generatedContent = response.choices[0]?.message?.content || 'CV généré avec succès';
 
+      // Increment free CV usage counter after successful generation
+      await storage.incrementFreeCvUsage(userId);
+
       res.status(200).json({ 
         content: generatedContent,
         message: 'CV généré avec succès par l\'IA',
@@ -895,6 +908,16 @@ INSTRUCTIONS:
         return res.status(400).json({ error: 'Nom de l\'entreprise et poste requis' });
       }
 
+      // Check if user can generate a free cover letter
+      const canGenerateFreeCoverLetter = await storage.canUserGenerateFreeCoverLetter(userId);
+      if (!canGenerateFreeCoverLetter) {
+        return res.status(403).json({ 
+          error: 'Vous avez épuisé votre génération de lettre gratuite. Choisissez un plan pour continuer.',
+          code: 'free_limit_exceeded',
+          type: 'cover-letter'
+        });
+      }
+
       const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
       });
@@ -947,6 +970,9 @@ INSTRUCTIONS:
       });
 
       const generatedContent = response.choices[0]?.message?.content || 'Lettre générée avec succès';
+
+      // Increment free cover letter usage counter after successful generation
+      await storage.incrementFreeCoverLetterUsage(userId);
 
       res.status(200).json({ 
         content: generatedContent,
