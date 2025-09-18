@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateCv } from "@/lib/api";
 
@@ -894,8 +895,18 @@ export default function CVWizard() {
       {/* Step Content */}
       {renderStep()}
 
+      {/* AI Generation Progress */}
+      {isGenerating && (
+        <ProgressLoader 
+          text="L'IA génère votre CV professionnel..." 
+          size="md"
+          variant="default"
+        />
+      )}
+
       {/* Navigation */}
-      <div className="flex justify-between">
+      {!isGenerating && (
+        <div className="flex justify-between">
         <Button
           variant="outline"
           onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
@@ -928,7 +939,8 @@ export default function CVWizard() {
             <ArrowRight className="h-4 w-4" />
           </Button>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

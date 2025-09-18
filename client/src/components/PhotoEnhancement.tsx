@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
 import { useUploadPhoto, useAnalyzePhoto, useEnhancePhoto, useApplyEnhancedPhoto, useUser } from "@/lib/api";
 
@@ -245,37 +246,47 @@ export default function PhotoEnhancement() {
         </Card>
       </div>
 
+      {/* AI Processing Loader */}
+      {(analyzePhoto.isPending || enhancePhoto.isPending || uploadPhoto.isPending) && (
+        <ProgressLoader 
+          text={
+            analyzePhoto.isPending ? "L'IA analyse votre photo..." :
+            enhancePhoto.isPending ? "L'IA améliore votre photo..." :
+            "Traitement de votre photo..."
+          }
+          size="md"
+          variant="default"
+        />
+      )}
+
       {/* Actions */}
-      {selectedFile && (
+      {selectedFile && !(analyzePhoto.isPending || enhancePhoto.isPending || uploadPhoto.isPending) && (
         <div className="flex gap-3 justify-center flex-wrap">
           <Button
             onClick={handleAnalyze}
-            disabled={analyzePhoto.isPending}
             className="gap-2"
             variant="outline"
             data-testid="button-analyze-photo"
           >
             <Sparkles className="h-4 w-4" />
-            {analyzePhoto.isPending ? "Analyse en cours..." : "Analyser avec l'IA"}
+            Analyser avec l'IA
           </Button>
           <Button
             onClick={handleEnhance}
-            disabled={enhancePhoto.isPending}
             className="gap-2"
             data-testid="button-enhance-photo"
           >
             <Sparkles className="h-4 w-4" />
-            {enhancePhoto.isPending ? "Amélioration en cours..." : "Améliorer avec l'IA"}
+            Améliorer avec l'IA
           </Button>
           <Button
             onClick={handleUpload}
-            disabled={uploadPhoto.isPending}
             variant="outline"
             className="gap-2"
             data-testid="button-upload-photo"
           >
             <CheckCircle className="h-4 w-4" />
-            {uploadPhoto.isPending ? "Upload en cours..." : "Utiliser photo originale"}
+            Utiliser photo originale
           </Button>
         </div>
       )}

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Bot, User, Loader2 } from "lucide-react";
 import { 
@@ -254,11 +255,13 @@ export function ChatInterface() {
                   <Bot className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
-              <div className="bg-muted rounded-lg p-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  L'IA réfléchit...
-                </div>
+              <div className="bg-muted/30 rounded-lg p-3 border border-muted min-w-[200px]">
+                <ProgressLoader 
+                  variant="inline" 
+                  size="sm" 
+                  text="L'IA réfléchit..." 
+                  className="justify-start"
+                />
               </div>
             </div>
           )}

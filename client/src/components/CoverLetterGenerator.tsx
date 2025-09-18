@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -413,7 +414,18 @@ export function CoverLetterGenerator() {
       {step === 3 && renderStep3()}
       {step === 4 && renderStep4()}
 
-      <div className="flex justify-between">
+      {/* AI Generation Progress */}
+      {(generateLetter.isPending || isGenerating) && (
+        <ProgressLoader 
+          text="L'IA rédige votre lettre de motivation personnalisée..." 
+          size="md"
+          variant="default"
+        />
+      )}
+
+      {/* Navigation */}
+      {!(generateLetter.isPending || isGenerating) && (
+        <div className="flex justify-between">
         <Button
           variant="outline"
           onClick={() => setStep(Math.max(1, step - 1))}
@@ -466,7 +478,8 @@ export function CoverLetterGenerator() {
             Nouvelle lettre
           </Button>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
