@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
+import { TrustedBy } from "@/components/TrustedBy";
 import { CVExamples } from "@/components/CVExamples";
 import { Features } from "@/components/Features";
 import { Testimonials } from "@/components/Testimonials";
@@ -13,6 +14,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <TrustedBy />
         <CVExamples />
         <Features />
         <Testimonials />
