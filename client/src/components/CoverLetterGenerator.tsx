@@ -11,6 +11,7 @@ import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useUpgradeModal } from "@/hooks/useUpgradeModal";
 import { Sparkles, Save, Download, ArrowRight, Loader2, Building, User, Briefcase, Plus } from "lucide-react";
 
 const SECTORS = [
@@ -39,12 +40,46 @@ export function CoverLetterGenerator() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { showUpgradeModal } = useUpgradeModal();
 
   const generateLetter = useMutation({
     mutationFn: async (data: any) => {
       setIsGenerating(true);
       try {
-        const response = await apiRequest('POST', '/api/cover-letters/generate', data);
+        const response = await fetch('/api/cover-letters/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          // Handle free limit exceeded specifically before throwing
+          if (response.status === 403) {
+            try {
+              const errorData = await response.json();
+              if (errorData.code === 'free_limit_exceeded') {
+                // Throw a special error that we can catch in onError
+                const specialError = new Error(errorData.error);
+                (specialError as any).isFreeLimit = true;
+                throw specialError;
+              }
+            } catch (parseError) {
+              // If JSON parsing fails, continue with normal error handling
+            }
+          }
+          
+          // For other errors, use standard error handling
+          let errorMessage = response.statusText;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            // Use default error message
+          }
+          throw new Error(errorMessage);
+        }
+
         return await response.json();
       } catch (error) {
         setIsGenerating(false);
@@ -66,6 +101,12 @@ export function CoverLetterGenerator() {
       setTimeout(() => {
         generateLetter.reset();
       }, 100);
+      
+      // Handle free limit exceeded specifically
+      if (error.isFreeLimit) {
+        showUpgradeModal();
+        return; // Don't show toast error for upgrade modal
+      }
       
       toast({
         title: "Erreur de génération",
