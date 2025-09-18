@@ -283,6 +283,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI CV Analysis - Demo version (no authentication required)
+  app.post('/api/cvs/analyze-demo', async (req: any, res) => {
+    try {
+      const { content, sector, position } = req.body;
+      
+      if (!content || content.trim().length < 50) {
+        return res.status(400).json({ 
+          error: 'Contenu du CV trop court. Minimum 50 caractères requis.' 
+        });
+      }
+
+      // Limit content length for demo (5000 characters)
+      if (content.length > 5000) {
+        return res.status(400).json({ 
+          error: 'Contenu du CV trop long pour la démo. Limite: 5000 caractères.' 
+        });
+      }
+
+      // For demo: Use mock analysis if OpenAI quota is exceeded
+      try {
+        const analysis = await analyzeCv(content, sector, position);
+        
+        res.json({ 
+          analysis: {
+            ...analysis,
+            isDemo: true,
+            note: 'Connectez-vous pour sauvegarder l\'analyse et accéder aux fonctionnalités avancées'
+          }
+        });
+      } catch (aiError: any) {
+        // If OpenAI is not available, return a realistic mock analysis
+        console.log('OpenAI unavailable for demo, using mock analysis');
+        
+        const mockAnalysis = {
+          score: Math.floor(Math.random() * 30) + 65, // Score between 65-95
+          suggestions: [
+            {
+              type: "contenu",
+              title: "Enrichir les descriptions d'expérience",
+              description: "Ajoutez des résultats quantifiés et des accomplissements spécifiques pour chaque poste.",
+              priority: "high"
+            },
+            {
+              type: "structure",
+              title: "Optimiser la mise en forme",
+              description: "Utilisez des puces et une structure claire pour améliorer la lisibilité.",
+              priority: "medium"
+            },
+            {
+              type: "competences",
+              title: "Compétences techniques",
+              description: "Mettez en avant les compétences demandées pour le poste visé.",
+              priority: "high"
+            }
+          ],
+          strengths: [
+            "Expérience pertinente dans le domaine",
+            "Progression de carrière cohérente",
+            "Compétences techniques adaptées"
+          ],
+          improvements: [
+            "Ajouter des métriques de performance",
+            "Optimiser pour les systèmes ATS",
+            "Personnaliser pour le secteur ciblé"
+          ]
+        };
+
+        res.json({ 
+          analysis: {
+            ...mockAnalysis,
+            isDemo: true,
+            isMock: true,
+            note: 'Analyse de démonstration. Connectez-vous pour une analyse IA complète et personnalisée.'
+          }
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in CV analysis demo:', error);
+      res.status(500).json({ 
+        error: 'Erreur lors de l\'analyse du CV. Veuillez réessayer.',
+        code: 'cv_analysis_error'
+      });
+    }
+  });
+
   // Cover Letter Routes
   app.get('/api/cover-letters', isAuthenticated, async (req: any, res) => {
     try {
