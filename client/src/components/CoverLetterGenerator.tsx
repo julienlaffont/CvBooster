@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useCoverLetter, useUpdateCoverLetter } from "@/lib/api";
 import { useUpgradeModal } from "@/hooks/useUpgradeModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { Sparkles, Save, Download, ArrowRight, Loader2, Building, User, Briefcase, Plus } from "lucide-react";
@@ -22,6 +24,9 @@ const SECTORS = [
 ];
 
 export function CoverLetterGenerator() {
+  const { id: coverLetterId } = useParams<{ id: string }>();
+  const isEditMode = !!coverLetterId;
+  
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     companyName: "",
@@ -40,8 +45,40 @@ export function CoverLetterGenerator() {
   });
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingLetter, setIsLoadingLetter] = useState(isEditMode);
+  
   const { toast } = useToast();
   const { isOpen, upgradeType, showUpgradeModal, closeModal } = useUpgradeModal();
+  
+  // Load existing cover letter if in edit mode
+  const { data: existingLetter, isLoading: letterLoading } = useCoverLetter(coverLetterId || "");
+  const updateCoverLetter = useUpdateCoverLetter();
+  
+  // Load existing letter data in edit mode
+  useEffect(() => {
+    if (isEditMode && existingLetter && !letterLoading) {
+      try {
+        setFormData(prev => ({
+          ...prev,
+          companyName: existingLetter.companyName || "",
+          position: existingLetter.position || "",
+          sector: existingLetter.sector || ""
+        }));
+        
+        setGeneratedContent(existingLetter.content);
+        setStep(4); // Go to final step to show the letter
+        setIsLoadingLetter(false);
+      } catch (error) {
+        console.error('Error loading cover letter data:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les données de la lettre",
+          variant: "destructive"
+        });
+        setIsLoadingLetter(false);
+      }
+    }
+  }, [existingLetter, letterLoading, isEditMode, toast]);
 
   const generateLetter = useMutation({
     mutationFn: async (data: any) => {
@@ -120,19 +157,27 @@ export function CoverLetterGenerator() {
 
   const saveLetter = useMutation({
     mutationFn: async (content: string) => {
-      const response = await apiRequest('POST', '/api/cover-letters', {
+      const letterData = {
         title: `Lettre - ${formData.companyName} - ${formData.position}`,
         content,
         companyName: formData.companyName,
         position: formData.position,
         sector: formData.sector
-      });
-      return await response.json();
+      };
+
+      if (isEditMode && coverLetterId) {
+        // Update existing cover letter
+        return await updateCoverLetter.mutateAsync({ id: coverLetterId, data: letterData });
+      } else {
+        // Create new cover letter
+        const response = await apiRequest('POST', '/api/cover-letters', letterData);
+        return await response.json();
+      }
     },
     onSuccess: () => {
       toast({
-        title: "Lettre sauvegardée",
-        description: "Votre lettre a été ajoutée à vos documents"
+        title: isEditMode ? "Lettre mise à jour" : "Lettre sauvegardée",
+        description: isEditMode ? "Votre lettre a été mise à jour avec succès" : "Votre lettre a été ajoutée à vos documents"
       });
     }
   });

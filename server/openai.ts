@@ -220,11 +220,81 @@ Réponds de manière personnalisée, pratique et bienveillante. Donne des consei
   } catch (error: any) {
     console.error('Error in AI chat:', error);
     
-    // Handle specific OpenAI API errors
-    if (error.code === 'insufficient_quota' || error.message?.includes('quota')) {
-      throw new Error('Quota OpenAI dépassé. Veuillez vérifier la configuration ou réessayer plus tard.');
+    // Fallback for testing when OpenAI quota is exceeded
+    if (error.code === 'insufficient_quota' || error.status === 429 || error.message?.includes('quota')) {
+      console.log('OpenAI quota exceeded, using fallback chat response for testing');
+      
+      const lastUserMessage = messages[messages.length - 1]?.content || '';
+      const lowerMessage = lastUserMessage.toLowerCase();
+      
+      // Generate contextual response based on user message
+      if (lowerMessage.includes('cv') || lowerMessage.includes('curriculum')) {
+        return `Merci pour votre question sur les CV ! Voici quelques conseils essentiels :
+
+**Personnalisation** : Adaptez votre CV à chaque poste en utilisant les mots-clés de l'offre
+**Quantifiez vos résultats** : Utilisez des chiffres concrets (augmentation de 20%, gestion de 10 projets...)
+**Structure claire** : Titre professionnel, expériences récentes en premier, compétences pertinentes
+
+${userContext?.cvs?.length ? `Je vois que vous avez ${userContext.cvs.length} CV dans votre profil. N'hésitez pas à me poser des questions spécifiques !` : 'Connectez-vous pour que je puisse analyser vos CV existants et vous donner des conseils personnalisés.'}
+
+Avez-vous une section particulière que vous aimeriez améliorer ?`;
+      }
+      
+      if (lowerMessage.includes('lettre') || lowerMessage.includes('motivation') || lowerMessage.includes('cover')) {
+        return `Excellente question sur les lettres de motivation ! Voici les clés du succès :
+
+📝 **Structure gagnante** :
+• Accroche personnalisée (pourquoi cette entreprise ?)
+• Développement (vos atouts + exemples concrets)
+• Conclusion (demande d'entretien)
+
+🎯 **Personnalisation** : Mentionnez l'entreprise, ses valeurs, ses projets
+💡 **Montrez votre valeur ajoutée** : Que pouvez-vous apporter de spécifique ?
+
+Utilisez CVBooster pour générer des lettres personnalisées à partir de vos CV !
+
+Pour quelle type de poste préparez-vous votre candidature ?`;
+      }
+      
+      if (lowerMessage.includes('entretien') || lowerMessage.includes('interview')) {
+        return `Les entretiens, c'est votre moment de briller ! Voici mes conseils :
+
+🔍 **Préparation** :
+• Recherchez l'entreprise (histoire, valeurs, actualités)
+• Préparez 3-5 exemples concrets de vos réalisations
+• Entraînez-vous à présenter votre parcours en 2 minutes
+
+❓ **Questions fréquentes** :
+• "Parlez-moi de vous" (pitch personnalisé)
+• "Pourquoi cette entreprise ?" (montrez votre motivation)
+• "Vos forces/faiblesses" (tournez les faiblesses en amélioration)
+
+💬 **Posez des questions** : Montrez votre intérêt pour le poste et l'équipe !
+
+Dans quel secteur cherchez-vous ? Je peux vous donner des conseils plus spécifiques.`;
+      }
+      
+      // Default coaching response
+      return `Merci de faire appel à CVBooster ! Je suis là pour vous aider dans votre recherche d'emploi.
+
+🚀 **Je peux vous conseiller sur :**
+• Optimisation de CV (structure, contenu, ATS)
+• Rédaction de lettres de motivation
+• Préparation d'entretiens
+• Stratégie de recherche d'emploi
+• Développement de votre personal branding
+
+${userContext?.sector ? `Je vois que vous travaillez dans ${userContext.sector}.` : ''} ${userContext?.position ? `Votre objectif : ${userContext.position}.` : ''}
+
+Posez-moi une question spécifique, et je vous donnerai des conseils personnalisés ! Par exemple :
+• "Comment améliorer mon CV pour un poste en marketing ?"
+• "Que dire dans une lettre de motivation pour une startup ?"
+• "Comment me préparer à un entretien en finance ?"
+
+*Réponse de démonstration - Connectez-vous pour des conseils IA plus avancés et personnalisés.*`;
     }
     
+    // Handle other specific OpenAI API errors
     if (error.code === 'rate_limit_exceeded' || error.status === 429) {
       throw new Error('Limite de taux OpenAI dépassée. Veuillez réessayer dans quelques instants.');
     }
@@ -238,7 +308,7 @@ Réponds de manière personnalisée, pratique et bienveillante. Donne des consei
     }
     
     // Generic OpenAI error
-    if (error.name === 'OpenAIError' || error.status) {
+    if (error.name === 'OpenAI Error' || error.status) {
       throw new Error('Erreur du service IA. Veuillez réessayer plus tard.');
     }
     

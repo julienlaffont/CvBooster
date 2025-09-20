@@ -64,6 +64,7 @@ function Router() {
       <Route path="/cv-wizard" component={CVWizardPage} />
       <Route path="/cvs/:id/edit" component={CVWizardPage} />
       <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
+      <Route path="/cover-letters/:id/edit" component={CoverLetterGeneratorPage} />
       <Route path="/photo" component={PhotoEnhancementPage} />
       <Route path="/chat" component={ChatPage} />
       

@@ -120,7 +120,7 @@ export function Dashboard() {
           if (docType === 'CV') {
             navigate(`/cvs/${docId}/edit`);
           } else {
-            toast({ title: "À venir", description: "Édition de lettres de motivation en cours de développement" });
+            navigate(`/cover-letters/${docId}/edit`);
           }
           break;
         case 'view':
