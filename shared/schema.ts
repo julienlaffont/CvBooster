@@ -37,6 +37,8 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   freeCvsGenerated: integer("free_cvs_generated").default(0),
   freeCoverLettersGenerated: integer("free_cover_letters_generated").default(0),
+  // Authentication source tracking
+  authProvider: varchar("auth_provider").default("email"), // email, google, github, etc.
   // Email/password authentication fields
   passwordHash: varchar("password_hash"),
   emailVerifiedAt: timestamp("email_verified_at"),
