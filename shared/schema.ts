@@ -17,6 +17,10 @@ import { z } from "zod";
 export const subscriptionPlanEnum = z.enum(["debutant", "pro", "expert"]);
 export const subscriptionStatusEnum = z.enum(["active", "inactive", "cancelled", "past_due"]);
 
+// Affiliate system enums
+export const affiliateStatusEnum = z.enum(["pending", "active", "suspended"]);
+export const commissionStatusEnum = z.enum(["pending", "validated", "paid", "cancelled"]);
+
 // Session storage table - required for Replit Auth
 export const sessions = pgTable(
   "sessions",
@@ -103,11 +107,65 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Affiliates table - stores affiliate program participants
+export const affiliates = pgTable("affiliates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  affiliateCode: varchar("affiliate_code").notNull().unique(),
+  commissionRate: integer("commission_rate").default(20), // Percentage as integer (20 = 20%)
+  status: varchar("status").default("active"), // active, suspended, pending
+  totalClicks: integer("total_clicks").default(0),
+  totalReferrals: integer("total_referrals").default(0),
+  totalCommissions: integer("total_commissions").default(0), // In cents
+  totalPaid: integer("total_paid").default(0), // In cents
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Affiliate clicks table - tracks link clicks
+export const affiliateClicks = pgTable("affiliate_clicks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  affiliateId: varchar("affiliate_id").notNull().references(() => affiliates.id, { onDelete: "cascade" }),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  clickedAt: timestamp("clicked_at").defaultNow(),
+});
+
+// Affiliate referrals table - tracks successful conversions
+export const affiliateReferrals = pgTable("affiliate_referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  affiliateId: varchar("affiliate_id").notNull().references(() => affiliates.id, { onDelete: "cascade" }),
+  referredUserId: varchar("referred_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  subscriptionPlan: varchar("subscription_plan"), // pro, expert
+  subscriptionAmount: integer("subscription_amount"), // In cents
+  commissionAmount: integer("commission_amount"), // In cents
+  status: varchar("status").default("pending"), // pending, validated, cancelled
+  referredAt: timestamp("referred_at").defaultNow(),
+  validatedAt: timestamp("validated_at"),
+});
+
+// Affiliate commissions table - tracks commission payments
+export const affiliateCommissions = pgTable("affiliate_commissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  affiliateId: varchar("affiliate_id").notNull().references(() => affiliates.id, { onDelete: "cascade" }),
+  referralId: varchar("referral_id").references(() => affiliateReferrals.id, { onDelete: "set null" }),
+  amount: integer("amount").notNull(), // In cents
+  status: varchar("status").default("pending"), // pending, validated, paid, cancelled
+  stripeTransferId: varchar("stripe_transfer_id"), // For tracking Stripe payouts
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   cvs: many(cvs),
   coverLetters: many(coverLetters),
   conversations: many(conversations),
+  affiliate: one(affiliates),
+  referrals: many(affiliateReferrals, {
+    relationName: "referredUser"
+  }),
 }));
 
 export const cvsRelations = relations(cvs, ({ one }) => ({
@@ -136,6 +194,46 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   conversation: one(conversations, {
     fields: [messages.conversationId],
     references: [conversations.id],
+  }),
+}));
+
+export const affiliatesRelations = relations(affiliates, ({ one, many }) => ({
+  user: one(users, {
+    fields: [affiliates.userId],
+    references: [users.id],
+  }),
+  clicks: many(affiliateClicks),
+  referrals: many(affiliateReferrals),
+  commissions: many(affiliateCommissions),
+}));
+
+export const affiliateClicksRelations = relations(affiliateClicks, ({ one }) => ({
+  affiliate: one(affiliates, {
+    fields: [affiliateClicks.affiliateId],
+    references: [affiliates.id],
+  }),
+}));
+
+export const affiliateReferralsRelations = relations(affiliateReferrals, ({ one }) => ({
+  affiliate: one(affiliates, {
+    fields: [affiliateReferrals.affiliateId],
+    references: [affiliates.id],
+  }),
+  referredUser: one(users, {
+    fields: [affiliateReferrals.referredUserId],
+    references: [users.id],
+    relationName: "referredUser"
+  }),
+}));
+
+export const affiliateCommissionsRelations = relations(affiliateCommissions, ({ one }) => ({
+  affiliate: one(affiliates, {
+    fields: [affiliateCommissions.affiliateId],
+    references: [affiliates.id],
+  }),
+  referral: one(affiliateReferrals, {
+    fields: [affiliateCommissions.referralId],
+    references: [affiliateReferrals.id],
   }),
 }));
 
@@ -171,6 +269,35 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+// Affiliate schema types for insertion
+export const insertAffiliateSchema = createInsertSchema(affiliates).omit({
+  id: true,
+  affiliateCode: true, // Auto-generated
+  totalClicks: true,
+  totalReferrals: true,
+  totalCommissions: true,
+  totalPaid: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAffiliateClickSchema = createInsertSchema(affiliateClicks).omit({
+  id: true,
+  clickedAt: true,
+});
+
+export const insertAffiliateReferralSchema = createInsertSchema(affiliateReferrals).omit({
+  id: true,
+  referredAt: true,
+  validatedAt: true,
+});
+
+export const insertAffiliateCommissionSchema = createInsertSchema(affiliateCommissions).omit({
+  id: true,
+  createdAt: true,
+  paidAt: true,
+});
+
 // Exported types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -185,9 +312,23 @@ export type Message = typeof messages.$inferSelect;
 export type UpdateCv = z.infer<typeof updateCvSchema>;
 export type UpdateCoverLetter = z.infer<typeof updateCoverLetterSchema>;
 
+// Affiliate types
+export type InsertAffiliate = z.infer<typeof insertAffiliateSchema>;
+export type Affiliate = typeof affiliates.$inferSelect;
+export type InsertAffiliateClick = z.infer<typeof insertAffiliateClickSchema>;
+export type AffiliateClick = typeof affiliateClicks.$inferSelect;
+export type InsertAffiliateReferral = z.infer<typeof insertAffiliateReferralSchema>;
+export type AffiliateReferral = typeof affiliateReferrals.$inferSelect;
+export type InsertAffiliateCommission = z.infer<typeof insertAffiliateCommissionSchema>;
+export type AffiliateCommission = typeof affiliateCommissions.$inferSelect;
+
 // Stripe subscription types
 export type SubscriptionPlan = z.infer<typeof subscriptionPlanEnum>;
 export type SubscriptionStatus = z.infer<typeof subscriptionStatusEnum>;
+
+// Affiliate enum types
+export type AffiliateStatus = z.infer<typeof affiliateStatusEnum>;
+export type CommissionStatus = z.infer<typeof commissionStatusEnum>;
 
 // Backend-only types that include userId for server-side operations
 export type CreateCv = InsertCv & { userId: string };
