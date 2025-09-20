@@ -99,9 +99,9 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-pricing">
+          <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-pricing">
             Tarifs
-          </a>
+          </Link>
           <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-testimonials">
             Témoignages
           </a>
