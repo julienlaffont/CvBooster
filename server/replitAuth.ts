@@ -64,7 +64,7 @@ async function upsertUser(
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
-    authProvider: "google", // Set provider for Replit Auth/Google OAuth
+    authProvider: "replit", // Set provider for Replit OIDC Auth
   });
 }
 
@@ -105,9 +105,12 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     // Store redirect and plan in session for post-login handling
-    if (req.query.redirect && req.query.plan) {
+    if (req.query.redirect) {
       (req.session as any).postLoginRedirect = req.query.redirect as string;
-      (req.session as any).postLoginPlan = req.query.plan as string;
+      // Store plan if provided
+      if (req.query.plan) {
+        (req.session as any).postLoginPlan = req.query.plan as string;
+      }
     }
     
     passport.authenticate(`replitauth:${req.hostname}`, {
@@ -141,11 +144,16 @@ export async function setupAuth(app: Express) {
         delete session.postLoginPlan;
         
         // Redirect based on stored parameters
-        if (redirect === 'subscribe' && plan) {
-          // Validate plan to prevent open redirect
-          const validPlans = ['starter', 'pro', 'expert'];
-          if (validPlans.includes(plan)) {
-            return res.redirect(`/subscribe?plan=${plan}`);
+        if (redirect === 'subscribe') {
+          if (plan) {
+            // Validate plan to prevent open redirect
+            const validPlans = ['debutant', 'pro', 'expert'];
+            if (validPlans.includes(plan)) {
+              return res.redirect(`/subscribe?plan=${plan}`);
+            }
+          } else {
+            // Redirect to subscribe page without plan
+            return res.redirect('/subscribe');
           }
         }
         
