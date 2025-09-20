@@ -124,9 +124,120 @@ export function Dashboard() {
           }
           break;
         case 'view':
+          // Open document content in new window for viewing (XSS-safe)
+          if (docType === 'CV') {
+            const cv = cvs?.find(c => c.id === docId);
+            if (!cv) {
+              toast({ title: "Erreur", description: "CV non trouvé", variant: "destructive" });
+              return;
+            }
+            
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+              // Create safe HTML structure
+              const doc = newWindow.document;
+              doc.write(`
+                <html>
+                  <head>
+                    <title>CV</title>
+                    <style>
+                      body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+                      h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                      .score { background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 10px 0; }
+                      .content { white-space: pre-wrap; font-family: inherit; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1 id="title"></h1>
+                    <div id="score-container"></div>
+                    <div class="content" id="content"></div>
+                  </body>
+                </html>
+              `);
+              doc.close();
+              
+              // Safely set content using textContent to prevent XSS
+              const titleEl = doc.getElementById('title');
+              const scoreEl = doc.getElementById('score-container');
+              const contentEl = doc.getElementById('content');
+              
+              if (titleEl) titleEl.textContent = cv.title || 'CV';
+              if (scoreEl && cv.score) {
+                scoreEl.className = 'score';
+                scoreEl.innerHTML = '<strong>Score:</strong> ';
+                const scoreSpan = doc.createElement('span');
+                scoreSpan.textContent = `${cv.score}/100`;
+                scoreEl.appendChild(scoreSpan);
+              }
+              if (contentEl) contentEl.textContent = cv.content || '';
+            }
+          } else {
+            const coverLetter = coverLetters?.find(cl => cl.id === docId);
+            if (!coverLetter) {
+              toast({ title: "Erreur", description: "Lettre de motivation non trouvée", variant: "destructive" });
+              return;
+            }
+            
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+              const doc = newWindow.document;
+              doc.write(`
+                <html>
+                  <head>
+                    <title>Lettre de Motivation</title>
+                    <style>
+                      body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+                      h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                      .info { background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 10px 0; }
+                      .content { white-space: pre-wrap; font-family: inherit; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1 id="title"></h1>
+                    <div class="info" id="info"></div>
+                    <div class="content" id="content"></div>
+                  </body>
+                </html>
+              `);
+              doc.close();
+              
+              // Safely set content using textContent to prevent XSS
+              const titleEl = doc.getElementById('title');
+              const infoEl = doc.getElementById('info');
+              const contentEl = doc.getElementById('content');
+              
+              if (titleEl) titleEl.textContent = coverLetter.title || 'Lettre de Motivation';
+              if (infoEl) {
+                infoEl.innerHTML = '<strong>Entreprise:</strong> ';
+                const companySpan = doc.createElement('span');
+                companySpan.textContent = coverLetter.companyName || 'N/A';
+                infoEl.appendChild(companySpan);
+                infoEl.appendChild(doc.createElement('br'));
+                
+                infoEl.innerHTML += '<strong>Poste:</strong> ';
+                const positionSpan = doc.createElement('span');
+                positionSpan.textContent = coverLetter.position || 'N/A';
+                infoEl.appendChild(positionSpan);
+                infoEl.appendChild(doc.createElement('br'));
+                
+                infoEl.innerHTML += '<strong>Secteur:</strong> ';
+                const sectorSpan = doc.createElement('span');
+                sectorSpan.textContent = coverLetter.sector || 'N/A';
+                infoEl.appendChild(sectorSpan);
+              }
+              if (contentEl) contentEl.textContent = coverLetter.content || '';
+            }
+          }
+          break;
         case 'download':
-          // TODO: Implement these actions
-          toast({ title: "À venir", description: `Fonction ${action} en cours de développement` });
+          // Download document as PDF
+          if (docType === 'CV') {
+            // Use existing CV export endpoint
+            window.open(`/api/cvs/${docId}/export/pdf`, '_blank');
+          } else {
+            // For cover letters, we need to create the export endpoint
+            window.open(`/api/cover-letters/${docId}/export/pdf`, '_blank');
+          }
           break;
       }
     } catch (error: any) {

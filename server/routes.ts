@@ -2447,7 +2447,7 @@ Sois personnalisé, constructif et motivant.`;
   }
 
   // Export CV as TXT (most ATS-friendly)
-  app.get('/api/cvs/:id/export/txt', isAuthenticated, async (req: any, res) => {
+  app.get('/api/cvs/:id/export/txt', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const cv = await storage.getCv(req.params.id, userId);
@@ -2468,7 +2468,7 @@ Sois personnalisé, constructif et motivant.`;
   });
 
   // Export CV as PDF (ATS-compatible)
-  app.get('/api/cvs/:id/export/pdf', isAuthenticated, async (req: any, res) => {
+  app.get('/api/cvs/:id/export/pdf', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const cv = await storage.getCv(req.params.id, userId);
@@ -2520,7 +2520,7 @@ Sois personnalisé, constructif et motivant.`;
   });
 
   // Export CV as DOCX (ATS-compatible)
-  app.get('/api/cvs/:id/export/docx', isAuthenticated, async (req: any, res) => {
+  app.get('/api/cvs/:id/export/docx', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const cv = await storage.getCv(req.params.id, userId);
@@ -2574,6 +2574,89 @@ Sois personnalisé, constructif et motivant.`;
     } catch (error) {
       console.error('Error exporting CV as DOCX:', error);
       res.status(500).json({ error: 'Failed to export CV as DOCX' });
+    }
+  });
+
+  // Helper function to format cover letter content for ATS
+  function formatCoverLetterForATS(coverLetter: any): string {
+    let formattedLetter = '';
+    
+    // Header
+    formattedLetter += `${coverLetter.title || 'Lettre de Motivation'}\n\n`;
+    
+    // Company and position info
+    if (coverLetter.companyName || coverLetter.position) {
+      formattedLetter += 'INFORMATIONS:\n';
+      if (coverLetter.companyName) formattedLetter += `Entreprise: ${coverLetter.companyName}\n`;
+      if (coverLetter.position) formattedLetter += `Poste: ${coverLetter.position}\n`;
+      if (coverLetter.sector) formattedLetter += `Secteur: ${coverLetter.sector}\n`;
+      formattedLetter += '\n';
+    }
+    
+    // Content
+    if (coverLetter.content) {
+      const cleanContent = coverLetter.content
+        .replace(/[^a-zA-ZÀ-ÿ0-9\s\-\.@(),:/\n\r•\-+'#&]/g, ' ')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/•/g, '-')
+        .trim();
+      
+      formattedLetter += cleanContent;
+    }
+    
+    return formattedLetter;
+  }
+
+  // Export Cover Letter as PDF (ATS-compatible)
+  app.get('/api/cover-letters/:id/export/pdf', isAuthenticatedExtended, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const coverLetter = await storage.getCoverLetter(req.params.id, userId);
+      
+      if (!coverLetter) {
+        return res.status(404).json({ error: 'Cover letter not found' });
+      }
+      
+      const formattedContent = formatCoverLetterForATS(coverLetter);
+      
+      // Create ATS-friendly PDF with jsPDF and pagination
+      const doc = new jsPDF();
+      
+      // Use standard fonts for ATS compatibility
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      
+      // Set up pagination parameters
+      const pageHeight = doc.internal.pageSize.height;
+      const lineHeight = 6;
+      const margin = 20;
+      const maxY = pageHeight - margin;
+      let currentY = margin;
+      
+      // Split content into lines for PDF with pagination
+      const lines = doc.splitTextToSize(formattedContent, 170);
+      
+      for (let i = 0; i < lines.length; i++) {
+        // Check if we need a new page
+        if (currentY + lineHeight > maxY) {
+          doc.addPage();
+          currentY = margin;
+        }
+        
+        // Add the line
+        doc.text(lines[i], margin, currentY);
+        currentY += lineHeight;
+      }
+      
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${coverLetter.title || 'Lettre'}_ATS.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error exporting cover letter as PDF:', error);
+      res.status(500).json({ error: 'Failed to export cover letter as PDF' });
     }
   });
 
