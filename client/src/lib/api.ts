@@ -425,3 +425,33 @@ export function useApplyEnhancedPhoto() {
     },
   });
 }
+
+export function useProfessionalRetouch() {
+  return useMutation({
+    mutationFn: async ({ photoFile, style }: { photoFile: File; style: string }) => {
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+      formData.append('style', style);
+      
+      const res = await fetch('/api/photo/retouch-professional', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!res.ok) {
+        let errorMessage = 'Erreur lors de la retouche professionnelle';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          const errorText = await res.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+      
+      return await res.json();
+    },
+  });
+}

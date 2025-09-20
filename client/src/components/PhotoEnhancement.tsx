@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
-import { useUploadPhoto, useAnalyzePhoto, useEnhancePhoto, useApplyEnhancedPhoto, useUser } from "@/lib/api";
+import { useUploadPhoto, useAnalyzePhoto, useEnhancePhoto, useApplyEnhancedPhoto, useProfessionalRetouch, useUser } from "@/lib/api";
 
 interface PhotoAnalysis {
   analysis: string;
@@ -19,6 +19,8 @@ interface PhotoEnhancement {
   enhancedImage: string;
   message: string;
   improvements: string[];
+  style?: string;
+  isAiGenerated?: boolean;
 }
 
 export default function PhotoEnhancement() {
@@ -31,6 +33,7 @@ export default function PhotoEnhancement() {
   const uploadPhoto = useUploadPhoto();
   const analyzePhoto = useAnalyzePhoto();
   const enhancePhoto = useEnhancePhoto();
+  const professionalRetouch = useProfessionalRetouch();
   const applyEnhancedPhoto = useApplyEnhancedPhoto();
   const { toast } = useToast();
 
@@ -96,6 +99,25 @@ export default function PhotoEnhancement() {
       toast({
         title: "Erreur d'amélioration",
         description: error.message || "Erreur lors de l'amélioration de la photo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleProfessionalRetouch = async (style: string) => {
+    if (!selectedFile) return;
+
+    try {
+      const result = await professionalRetouch.mutateAsync({ photoFile: selectedFile, style });
+      setEnhancement(result);
+      toast({
+        title: "Photo retouchée avec IA",
+        description: "Votre photo a été retouchée professionnellement avec succès.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur de retouche IA",
+        description: error.message || "Erreur lors de la retouche professionnelle de la photo.",
         variant: "destructive",
       });
     }
@@ -247,11 +269,12 @@ export default function PhotoEnhancement() {
       </div>
 
       {/* AI Processing Loader */}
-      {(analyzePhoto.isPending || enhancePhoto.isPending || uploadPhoto.isPending) && (
+      {(analyzePhoto.isPending || enhancePhoto.isPending || professionalRetouch.isPending || uploadPhoto.isPending) && (
         <ProgressLoader 
           text={
             analyzePhoto.isPending ? "L'IA analyse votre photo..." :
             enhancePhoto.isPending ? "L'IA améliore votre photo..." :
+            professionalRetouch.isPending ? "L'IA retouche votre photo avec des vêtements professionnels..." :
             "Traitement de votre photo..."
           }
           size="md"
@@ -260,34 +283,88 @@ export default function PhotoEnhancement() {
       )}
 
       {/* Actions */}
-      {selectedFile && !(analyzePhoto.isPending || enhancePhoto.isPending || uploadPhoto.isPending) && (
-        <div className="flex gap-3 justify-center flex-wrap">
-          <Button
-            onClick={handleAnalyze}
-            className="gap-2"
-            variant="outline"
-            data-testid="button-analyze-photo"
-          >
-            <Sparkles className="h-4 w-4" />
-            Analyser avec l'IA
-          </Button>
-          <Button
-            onClick={handleEnhance}
-            className="gap-2"
-            data-testid="button-enhance-photo"
-          >
-            <Sparkles className="h-4 w-4" />
-            Améliorer avec l'IA
-          </Button>
-          <Button
-            onClick={handleUpload}
-            variant="outline"
-            className="gap-2"
-            data-testid="button-upload-photo"
-          >
-            <CheckCircle className="h-4 w-4" />
-            Utiliser photo originale
-          </Button>
+      {selectedFile && !(analyzePhoto.isPending || enhancePhoto.isPending || professionalRetouch.isPending || uploadPhoto.isPending) && (
+        <div className="space-y-4">
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Button
+              onClick={handleAnalyze}
+              className="gap-2"
+              variant="outline"
+              data-testid="button-analyze-photo"
+            >
+              <Sparkles className="h-4 w-4" />
+              Analyser avec l'IA
+            </Button>
+            <Button
+              onClick={handleEnhance}
+              className="gap-2"
+              data-testid="button-enhance-photo"
+            >
+              <Sparkles className="h-4 w-4" />
+              Amélioration basique
+            </Button>
+            <Button
+              onClick={handleUpload}
+              variant="outline"
+              className="gap-2"
+              data-testid="button-upload-photo"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Utiliser photo originale
+            </Button>
+          </div>
+
+          {/* Professional Retouch Options */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center text-lg">
+                ✨ Retouche Professionnelle IA
+              </CardTitle>
+              <p className="text-sm text-muted-foreground text-center">
+                Gardez votre visage, changez seulement vos vêtements avec l'IA
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => handleProfessionalRetouch('suit')}
+                  variant="outline"
+                  className="gap-2 h-auto py-3 flex-col"
+                  data-testid="button-retouch-suit"
+                >
+                  <span className="text-lg">👔</span>
+                  <span className="text-xs">Costume élégant</span>
+                </Button>
+                <Button
+                  onClick={() => handleProfessionalRetouch('business_casual')}
+                  variant="outline"
+                  className="gap-2 h-auto py-3 flex-col"
+                  data-testid="button-retouch-business"
+                >
+                  <span className="text-lg">👗</span>
+                  <span className="text-xs">Business casual</span>
+                </Button>
+                <Button
+                  onClick={() => handleProfessionalRetouch('formal_dress')}
+                  variant="outline"
+                  className="gap-2 h-auto py-3 flex-col"
+                  data-testid="button-retouch-formal"
+                >
+                  <span className="text-lg">👠</span>
+                  <span className="text-xs">Tenue formelle</span>
+                </Button>
+                <Button
+                  onClick={() => handleProfessionalRetouch('professional_headshot')}
+                  variant="outline"
+                  className="gap-2 h-auto py-3 flex-col"
+                  data-testid="button-retouch-headshot"
+                >
+                  <span className="text-lg">📸</span>
+                  <span className="text-xs">Portrait pro</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

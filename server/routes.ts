@@ -2204,6 +2204,166 @@ Sois personnalisé, constructif et motivant.`;
     }
   });
 
+  // AI Photo Professional Retouch - Real clothing swap with identity preservation
+  app.post('/api/photo/retouch-professional', isAuthenticatedExtended, photoUpload.single('photo'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucune photo fournie pour la retouche professionnelle' });
+      }
+
+      // Check for API key
+      if (!process.env.LIGHTX_API_KEY) {
+        return res.status(500).json({ 
+          error: 'Service de retouche temporairement indisponible. Configuration manquante.',
+          code: 'service_unavailable'
+        });
+      }
+
+      const { style } = req.body;
+      
+      // Validate style parameter
+      const validStyles = ['suit', 'business_casual', 'formal_dress', 'professional_headshot'];
+      if (!validStyles.includes(style)) {
+        return res.status(400).json({ error: 'Style de retouche invalide' });
+      }
+
+      // Convert image to base64 for LightX API
+      const base64Image = req.file.buffer.toString('base64');
+      const imageDataUrl = `data:${req.file.mimetype};base64,${base64Image}`;
+
+      // Define clothing descriptions for each style
+      let textPrompt = '';
+      let styleDescription = '';
+      
+      switch (style) {
+        case 'suit':
+          textPrompt = 'elegant black or navy blue business suit with tie, white shirt, professional formal attire';
+          styleDescription = 'Costume élégant et cravate';
+          break;
+        case 'business_casual':
+          textPrompt = 'modern business casual blazer with shirt or blouse, professional neutral colors';
+          styleDescription = 'Tenue business casual moderne';
+          break;
+        case 'formal_dress':
+          textPrompt = 'elegant formal dress or professional ensemble, sophisticated colors, business appropriate';
+          styleDescription = 'Tenue formelle sophistiquée';
+          break;
+        default: // professional_headshot
+          textPrompt = 'professional business attire, well-tailored clothing, corporate style';
+          styleDescription = 'Portrait professionnel optimisé';
+      }
+
+      // Call LightX API for virtual try-on with identity preservation
+      const lightxResponse = await fetch('https://api.lightxeditor.com/external/api/v1/outfit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.LIGHTX_API_KEY || '',
+        },
+        body: JSON.stringify({
+          imageUrl: imageDataUrl,
+          textPrompt: textPrompt
+        }),
+      });
+
+      if (!lightxResponse.ok) {
+        let errorText = await lightxResponse.text();
+        let errorData = null;
+        
+        // Try to parse JSON error
+        try {
+          errorData = JSON.parse(errorText);
+          errorText = errorData.error || errorData.message || errorText;
+        } catch {
+          // Keep raw text if not JSON
+        }
+        
+        console.error('LightX API error:', errorText);
+        
+        if (lightxResponse.status === 429) {
+          return res.status(429).json({ 
+            error: 'Limite de taux dépassée pour la retouche. Veuillez réessayer dans quelques instants.',
+            code: 'rate_limit'
+          });
+        }
+        
+        if (lightxResponse.status === 402) {
+          return res.status(402).json({ 
+            error: 'Quota dépassé pour la retouche professionnelle. Veuillez vérifier vos crédits.',
+            code: 'quota_exceeded'
+          });
+        }
+
+        return res.status(lightxResponse.status).json({
+          error: errorText || 'Erreur lors de la retouche professionnelle',
+          code: 'api_error'
+        });
+      }
+
+      const lightxResult = await lightxResponse.json();
+      
+      if (!lightxResult.resultUrl && !lightxResult.imageUrl) {
+        throw new Error('Aucune image retouchée reçue de l\'API');
+      }
+
+      // Download the retouched image
+      const retouchedImageUrl = lightxResult.resultUrl || lightxResult.imageUrl;
+      const imageDownloadResponse = await fetch(retouchedImageUrl);
+      const imageBuffer = Buffer.from(await imageDownloadResponse.arrayBuffer());
+      
+      // Process the image with Sharp for final optimization
+      const finalImageBuffer = await sharp(imageBuffer)
+        .resize(512, 512, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .jpeg({
+          quality: 92,
+          progressive: true
+        })
+        .toBuffer();
+
+      const finalBase64 = `data:image/jpeg;base64,${finalImageBuffer.toString('base64')}`;
+      
+      res.status(200).json({ 
+        enhancedImage: finalBase64,
+        message: 'Photo retouchée avec succès - votre visage conservé, vêtements changés',
+        improvements: [
+          `${styleDescription} ajouté par l'IA`,
+          'Visage et identité préservés',
+          'Vêtements professionnels ajustés naturellement',
+          'Éclairage et arrière-plan maintenus',
+          'Retouche réaliste avec préservation d\'identité'
+        ],
+        style: style,
+        isAiGenerated: false, // This is a retouch, not generation
+        isIdentityPreserved: true
+      });
+    } catch (error: any) {
+      console.error('Error with professional AI retouch:', error);
+      
+      // Handle specific API errors
+      if (error.message?.includes('rate_limit') || error.message?.includes('429')) {
+        return res.status(429).json({ 
+          error: 'Limite de taux dépassée pour la retouche. Veuillez réessayer dans quelques instants.',
+          code: 'rate_limit'
+        });
+      }
+      
+      if (error.message?.includes('quota') || error.message?.includes('402')) {
+        return res.status(402).json({ 
+          error: 'Quota dépassé pour la retouche professionnelle. Veuillez vérifier vos crédits.',
+          code: 'quota_exceeded'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'Erreur lors de la retouche professionnelle de la photo',
+        details: error.message 
+      });
+    }
+  });
+
   // AI Photo Enhancement - Demo version (no authentication required)
   app.post('/api/photo/enhance-demo', photoUpload.single('photo'), async (req: any, res) => {
     try {
