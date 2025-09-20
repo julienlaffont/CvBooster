@@ -2464,6 +2464,24 @@ Sois personnalisé, constructif et motivant.`;
     }
   });
 
+  // User Usage Route for subscription limits
+  app.get('/api/user/usage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const usageInfo = await storage.getUserFreeTrialStatus(userId);
+      
+      res.json({
+        cvGenerationsCount: usageInfo.cvGenerationsCount,
+        coverLetterGenerationsCount: usageInfo.coverLetterGenerationsCount,
+        canGenerateCV: usageInfo.canGenerateFreeCv,
+        canGenerateCoverLetter: usageInfo.canGenerateFreeCoverLetter
+      });
+    } catch (error) {
+      console.error('Error fetching user usage:', error);
+      res.status(500).json({ error: 'Failed to fetch user usage' });
+    }
+  });
+
   // Dashboard Stats Route
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {

@@ -65,6 +65,7 @@ export function useCreateCv() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cvs'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/usage'] });
     },
   });
 }
@@ -111,6 +112,7 @@ export function useAnalyzeCv() {
       queryClient.invalidateQueries({ queryKey: ['/api/cvs'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cvs', data.cv.id] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/usage'] });
     },
   });
 }
@@ -140,6 +142,7 @@ export function useCreateCoverLetter() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cover-letters'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/usage'] });
     },
   });
 }
@@ -186,6 +189,7 @@ export function useAnalyzeCoverLetter() {
       queryClient.invalidateQueries({ queryKey: ['/api/cover-letters'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cover-letters', data.letter.id] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/usage'] });
     },
   });
 }

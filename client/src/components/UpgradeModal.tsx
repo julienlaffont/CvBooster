@@ -9,13 +9,15 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, X } from "lucide-react";
+import { Check, Crown, Rocket, X } from "lucide-react";
 import { Link } from "wouter";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: 'cv' | 'cover-letter';
+  type?: 'cv' | 'cover-letter' | 'feature';
+  feature?: string;
 }
 
 const plans = [
@@ -33,39 +35,58 @@ const plans = [
       "Chat IA 24/7",
       "Support prioritaire"
     ],
-    popular: true
+    popular: true,
+    planId: 'pro'
   },
   {
     name: "Expert",
     price: "50€",
     period: "par mois", 
     description: "Pour les professionnels exigeants",
-    icon: Zap,
+    icon: Rocket,
     badge: "Complet",
     features: [
       "Tout de Pro +",
       "Analyse concurrentielle",
       "Optimisation ATS",
       "Coaching carrière 1-à-1",
-      "Templates exclusifs"
+      "Templates exclusifs",
+      "Statistiques avancées"
     ],
-    popular: false
+    popular: false,
+    planId: 'expert'
   }
 ];
 
-export function UpgradeModal({ isOpen, onClose, type }: UpgradeModalProps) {
+export function UpgradeModal({ isOpen, onClose, type = 'feature', feature }: UpgradeModalProps) {
+  const { currentPlan, remainingCVGenerations, remainingCoverLetterGenerations } = useSubscription();
+
   const getMessage = () => {
     if (type === 'cv') {
+      const remaining = remainingCVGenerations;
       return {
-        title: "Votre CV gratuit a été généré !",
-        description: "Vous avez utilisé votre génération de CV gratuite. Choisissez un plan pour continuer à créer des CV illimités avec l'IA.",
+        title: remaining === 0 ? "Limite de CV gratuits atteinte" : "Passez au niveau supérieur !",
+        description: remaining === 0 
+          ? "Vous avez utilisé vos 3 générations de CV gratuites. Choisissez un plan pour continuer à créer des CV illimités avec l'IA."
+          : `Il vous reste ${remaining} génération${remaining > 1 ? 's' : ''} de CV gratuite${remaining > 1 ? 's' : ''}. Passez à un plan payant pour des générations illimitées.`,
         cta: "Générer plus de CV"
+      };
+    } else if (type === 'cover-letter') {
+      const remaining = remainingCoverLetterGenerations;
+      return {
+        title: remaining === 0 ? "Limite de lettres gratuites atteinte" : "Passez au niveau supérieur !",
+        description: remaining === 0 
+          ? "Vous avez utilisé vos 3 générations de lettres gratuites. Choisissez un plan pour continuer à créer des lettres illimitées avec l'IA."
+          : `Il vous reste ${remaining} génération${remaining > 1 ? 's' : ''} de lettre${remaining > 1 ? 's' : ''} gratuite${remaining > 1 ? 's' : ''}. Passez à un plan payant pour des générations illimitées.`,
+        cta: "Générer plus de lettres"
       };
     } else {
       return {
-        title: "Votre lettre gratuite a été générée !",
-        description: "Vous avez utilisé votre génération de lettre gratuite. Choisissez un plan pour continuer à créer des lettres illimitées avec l'IA.",
-        cta: "Générer plus de lettres"
+        title: feature ? `Fonctionnalité ${feature} Premium` : "Débloquez plus de fonctionnalités",
+        description: feature 
+          ? `La fonctionnalité "${feature}" est disponible avec les plans Pro et Expert. Choisissez votre plan pour débloquer cette fonctionnalité et bien plus encore.`
+          : "Débloquez toutes les fonctionnalités premium avec nos plans Pro et Expert. Générations illimitées, templates exclusifs, et bien plus encore.",
+        cta: "Découvrir les plans"
       };
     }
   };
@@ -128,7 +149,7 @@ export function UpgradeModal({ isOpen, onClose, type }: UpgradeModalProps) {
                   ))}
                 </ul>
 
-                <Link href="/pricing">
+                <Link href={`/subscribe?plan=${plan.planId}`}>
                   <Button 
                     className="w-full" 
                     variant={plan.popular ? "default" : "outline"}

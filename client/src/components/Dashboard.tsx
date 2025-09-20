@@ -29,6 +29,9 @@ import {
   useDeleteCv,
   useDeleteCoverLetter
 } from "@/lib/api";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SubscriptionBanner, PlanStatusIndicator } from "@/components/SubscriptionBanner";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 // Helper function to format dates
 function formatDate(dateString: string | Date) {
@@ -61,6 +64,8 @@ function getStatusLabel(status: string) {
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState("documents");
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalType, setUpgradeModalType] = useState<'cv' | 'cover-letter' | 'feature'>('feature');
   const { toast } = useToast();
   
   // API calls
@@ -68,6 +73,17 @@ export function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: cvs = [], isLoading: cvsLoading } = useCvs();
   const { data: coverLetters = [], isLoading: lettersLoading } = useCoverLetters();
+  
+  // Subscription management
+  const {
+    canGenerateCV,
+    canGenerateCoverLetter,
+    remainingCVGenerations,
+    remainingCoverLetterGenerations,
+    hasCoaching,
+    hasAdvancedAnalytics,
+    isPremiumUser
+  } = useSubscription();
   
   // Mutations
   const uploadCv = useUploadCv();
@@ -115,6 +131,21 @@ export function Dashboard() {
   };
 
   const handleNewDocument = (type: string) => {
+    // Check subscription limits before creating new documents
+    if (type === "CV") {
+      if (!canGenerateCV) {
+        setUpgradeModalType('cv');
+        setShowUpgradeModal(true);
+        return;
+      }
+    } else if (type === "Lettre") {
+      if (!canGenerateCoverLetter) {
+        setUpgradeModalType('cover-letter');
+        setShowUpgradeModal(true);
+        return;
+      }
+    }
+    
     // TODO: Implement document creation
     toast({ title: "À venir", description: `Création de ${type} en cours de développement` });
   };
@@ -210,20 +241,33 @@ export function Dashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <PlanStatusIndicator />
               <Button 
                 variant="outline" 
                 onClick={() => handleNewDocument("CV")}
                 data-testid="button-new-cv"
+                disabled={!canGenerateCV && !isPremiumUser}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau CV
+                {!isPremiumUser && (
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {remainingCVGenerations}/3
+                  </Badge>
+                )}
               </Button>
               <Button 
                 onClick={() => handleNewDocument("Lettre")}
                 data-testid="button-new-letter"
+                disabled={!canGenerateCoverLetter && !isPremiumUser}
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Nouvelle Lettre
+                {!isPremiumUser && (
+                  <Badge variant="outline" className="ml-2 text-xs">
+                    {remainingCoverLetterGenerations}/3
+                  </Badge>
+                )}
               </Button>
             </div>
           </div>
@@ -231,6 +275,9 @@ export function Dashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Subscription Banner */}
+        <SubscriptionBanner />
+        
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
@@ -465,6 +512,13 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        type={upgradeModalType}
+      />
     </div>
   );
 }
