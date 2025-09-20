@@ -1,0 +1,29 @@
+Édite le projet existant sans le recréer entièrement. Je voudrais connecter la section Tarifs de mon application à Stripe afin que les paiements soient automatisés et versés directement sur mon compte Stripe. Voici les instructions :  
+
+1. **Connexion Stripe :**
+   - Intègre l’API Stripe Checkout à l’application.
+   - Utilise mes clés API Stripe (clé publique + clé secrète) que je fournirai pour établir la connexion sécurisée. 
+   - Vérifie que la configuration est conforme aux bonnes pratiques de sécurité (ne jamais exposer la clé secrète côté client).  
+
+2. **Plans tarifaires :**
+   - Associe chaque bouton “Choisir ce plan” de la section Tarifs aux paiements Stripe.
+   - Plans à créer et connecter dans Stripe :
+     - **Débutant** : Gratuit → pas de paiement, mais accès limité (redirige uniquement vers l’inscription).  
+     - **Pro** : 20€/mois → abonnement récurrent Stripe.  
+     - **Expert** : 50€/mois → abonnement récurrent Stripe.  
+
+3. **Processus d’achat :**
+   - Quand un utilisateur clique sur “Choisir ce plan”, il doit être redirigé vers une page de paiement Stripe sécurisée.  
+   - Après paiement validé, l’utilisateur est redirigé vers une page de confirmation sur mon site.  
+   - L’abonnement doit s’activer automatiquement dans l’application une fois le paiement validé.  
+
+4. **Gestion utilisateur :**
+   - Stocke l’information de l’abonnement (Débutant, Pro, Expert) dans la base de données utilisateur.  
+   - Permets au système de vérifier le plan actif d’un utilisateur pour limiter ou débloquer les fonctionnalités correspondantes.  
+
+5. **Test et fiabilité :**
+   - Mets en place un mode test Stripe pour vérifier le bon fonctionnement.  
+   - Corrige les erreurs éventuelles et assure-toi que les paiements passent bien avant de basculer en mode production.  
+
+**Objectif :**
+Connecter Stripe aux plans tarifaires (Pro et Expert) afin de rendre les paiements 100% fonctionnels, sécurisés et automatisés, avec redirection et activation de l’abonnement dans l’application.

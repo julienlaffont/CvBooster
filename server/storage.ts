@@ -18,6 +18,8 @@ import {
   type CreateConversation,
   type Message,
   type InsertMessage,
+  type SubscriptionPlan,
+  type SubscriptionStatus,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -28,6 +30,12 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfileImage(userId: string, imageUrl: string): Promise<User>;
+  
+  // Stripe operations
+  updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId?: string): Promise<User>;
+  updateUserSubscriptionPlan(userId: string, plan: SubscriptionPlan, status: SubscriptionStatus): Promise<User>;
+  clearUserSubscription(userId: string): Promise<User>;
+  getUserSubscriptionInfo(userId: string): Promise<{ subscriptionPlan: SubscriptionPlan; subscriptionStatus: SubscriptionStatus; stripeCustomerId?: string; stripeSubscriptionId?: string } | null>;
   
   // CV operations
   getUserCvs(userId: string): Promise<Cv[]>;
@@ -69,11 +77,18 @@ export class DatabaseStorage implements IStorage {
         .where(eq(users.email, userData.email));
       
       if (existingUser) {
-        // Update existing user
+        // Update existing user but preserve Stripe fields
+        const updateData = { ...userData };
+        // Remove Stripe fields to avoid overwriting
+        delete (updateData as any).stripeCustomerId;
+        delete (updateData as any).stripeSubscriptionId;
+        delete (updateData as any).subscriptionPlan;
+        delete (updateData as any).subscriptionStatus;
+        
         const [updatedUser] = await db
           .update(users)
           .set({
-            ...userData,
+            ...updateData,
             updatedAt: new Date(),
           })
           .where(eq(users.email, userData.email))
@@ -83,13 +98,20 @@ export class DatabaseStorage implements IStorage {
     }
     
     // If no existing user by email, try normal upsert by ID
+    const insertData = { ...userData };
+    // Remove Stripe fields from insert data (they have defaults)
+    delete (insertData as any).stripeCustomerId;
+    delete (insertData as any).stripeSubscriptionId;
+    delete (insertData as any).subscriptionPlan;
+    delete (insertData as any).subscriptionStatus;
+    
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values(insertData)
       .onConflictDoUpdate({
         target: users.id,
         set: {
-          ...userData,
+          ...insertData,
           updatedAt: new Date(),
         },
       })
@@ -110,6 +132,72 @@ export class DatabaseStorage implements IStorage {
       throw new Error('User not found');
     }
     return user;
+  }
+
+  // Stripe operations
+  async updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId?: string): Promise<User> {
+    const updateData: any = { 
+      stripeCustomerId,
+      updatedAt: new Date(),
+    };
+    
+    if (stripeSubscriptionId) {
+      updateData.stripeSubscriptionId = stripeSubscriptionId;
+    }
+
+    const [user] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async updateUserSubscriptionPlan(userId: string, plan: SubscriptionPlan, status: SubscriptionStatus): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        subscriptionPlan: plan,
+        subscriptionStatus: status,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async clearUserSubscription(userId: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        stripeSubscriptionId: null,
+        subscriptionPlan: 'debutant',
+        subscriptionStatus: 'inactive',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async getUserSubscriptionInfo(userId: string): Promise<{ subscriptionPlan: SubscriptionPlan; subscriptionStatus: SubscriptionStatus; stripeCustomerId?: string; stripeSubscriptionId?: string } | null> {
+    const user = await this.getUser(userId);
+    if (!user) return null;
+    return {
+      subscriptionPlan: (user.subscriptionPlan as SubscriptionPlan) || 'debutant',
+      subscriptionStatus: (user.subscriptionStatus as SubscriptionStatus) || 'inactive',
+      stripeCustomerId: user.stripeCustomerId || undefined,
+      stripeSubscriptionId: user.stripeSubscriptionId || undefined
+    };
   }
 
   // CV operations

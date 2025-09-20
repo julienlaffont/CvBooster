@@ -13,6 +13,10 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Stripe subscription enums
+export const subscriptionPlanEnum = z.enum(["debutant", "pro", "expert"]);
+export const subscriptionStatusEnum = z.enum(["active", "inactive", "cancelled", "past_due"]);
+
 // Session storage table - required for Replit Auth
 export const sessions = pgTable(
   "sessions",
@@ -33,6 +37,11 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   freeCvsGenerated: integer("free_cvs_generated").default(0),
   freeCoverLettersGenerated: integer("free_cover_letters_generated").default(0),
+  // Stripe integration fields
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  subscriptionPlan: varchar("subscription_plan").default("debutant"), // debutant, pro, expert
+  subscriptionStatus: varchar("subscription_status").default("inactive"), // active, inactive, cancelled, past_due
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -167,6 +176,10 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 export type UpdateCv = z.infer<typeof updateCvSchema>;
 export type UpdateCoverLetter = z.infer<typeof updateCoverLetterSchema>;
+
+// Stripe subscription types
+export type SubscriptionPlan = z.infer<typeof subscriptionPlanEnum>;
+export type SubscriptionStatus = z.infer<typeof subscriptionStatusEnum>;
 
 // Backend-only types that include userId for server-side operations
 export type CreateCv = InsertCv & { userId: string };
