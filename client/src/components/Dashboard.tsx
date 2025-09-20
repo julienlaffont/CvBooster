@@ -12,6 +12,7 @@ import {
   Eye, 
   Edit, 
   Download, 
+  Trash,
   MessageSquare,
   Star,
   Clock,
@@ -554,6 +555,16 @@ export function Dashboard() {
                           aria-label="Télécharger"
                         >
                           <Download className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleDocumentAction("delete", doc.id, doc.type as 'CV' | 'Lettre')}
+                          data-testid={`button-delete-${index}`}
+                          aria-label="Supprimer"
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
