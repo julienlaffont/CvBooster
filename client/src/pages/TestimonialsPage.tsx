@@ -1,8 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Quote, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Star, Quote, CheckCircle, ArrowLeft, Home } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { CVExamples } from "@/components/CVExamples";
+import { Link } from "wouter";
 
 const testimonials = [
   {
@@ -67,8 +69,18 @@ export default function TestimonialsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
+      {/* Back to Menu Button */}
+      <div className="container mx-auto px-4 pt-6">
+        <Link href="/">
+          <Button variant="ghost" className="mb-4" data-testid="button-back-to-menu">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour au menu
+          </Button>
+        </Link>
+      </div>
+
       {/* Hero Section */}
-      <div className="py-20 px-4">
+      <div className="py-12 px-4">
         <div className="container mx-auto max-w-4xl text-center">
           <Badge variant="secondary" className="mb-6" data-testid="badge-social-proof">
             <CheckCircle className="h-3 w-3 mr-2" />
