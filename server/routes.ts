@@ -2304,13 +2304,13 @@ Sois personnalisé, constructif et motivant.`;
       
       res.status(200).json({ 
         enhancedImage: finalBase64,
-        message: 'Photo retouchée avec succès - votre visage conservé, vêtements changés',
+        message: `Photo optimisée avec succès pour un rendu professionnel (${style})`,
         improvements: [
-          `${styleDescription} ajouté par l'IA`,
-          'Visage et identité préservés',
-          'Vêtements professionnels ajustés naturellement',
-          'Éclairage et arrière-plan maintenus',
-          'Retouche réaliste avec préservation d\'identité'
+          `Amélioration ${styleDescription}`,
+          'Qualité d\'image optimisée',
+          'Contraste et luminosité ajustés',
+          'Netteté améliorée pour un look professionnel',
+          'Optimisation selon le style sélectionné'
         ],
         style: style,
         isAiGenerated: false, // This is a retouch, not generation

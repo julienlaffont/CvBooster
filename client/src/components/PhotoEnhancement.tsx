@@ -274,7 +274,7 @@ export default function PhotoEnhancement() {
           text={
             analyzePhoto.isPending ? "L'IA analyse votre photo..." :
             enhancePhoto.isPending ? "L'IA améliore votre photo..." :
-            professionalRetouch.isPending ? "L'IA retouche votre photo avec des vêtements professionnels..." :
+            professionalRetouch.isPending ? "L'IA optimise votre photo pour un rendu professionnel..." :
             "Traitement de votre photo..."
           }
           size="md"
@@ -318,10 +318,10 @@ export default function PhotoEnhancement() {
           <Card>
             <CardHeader>
               <CardTitle className="text-center text-lg">
-                ✨ Retouche Professionnelle IA
+                ✨ Amélioration Professionnelle IA
               </CardTitle>
               <p className="text-sm text-muted-foreground text-center">
-                Gardez votre visage, changez seulement vos vêtements avec l'IA
+                Optimise votre photo pour un rendu professionnel selon le style choisi
               </p>
             </CardHeader>
             <CardContent>
