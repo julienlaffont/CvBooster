@@ -2253,84 +2253,54 @@ Sois personnalisé, constructif et motivant.`;
           styleDescription = 'Portrait professionnel optimisé';
       }
 
-      // Call LightX API for virtual try-on with identity preservation
-      const lightxResponse = await fetch('https://api.lightxeditor.com/external/api/v1/outfit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.LIGHTX_API_KEY || '',
-        },
-        body: JSON.stringify({
-          imageUrl: imageDataUrl,
-          textPrompt: textPrompt
-        }),
-      });
-
-      if (!lightxResponse.ok) {
-        let errorText = await lightxResponse.text();
-        let errorData = null;
-        
-        // Try to parse JSON error
-        try {
-          errorData = JSON.parse(errorText);
-          errorText = errorData.error || errorData.message || errorText;
-        } catch {
-          // Keep raw text if not JSON
-        }
-        
-        console.error('LightX API error:', errorText);
-        
-        if (lightxResponse.status === 429) {
-          return res.status(429).json({ 
-            error: 'Limite de taux dépassée pour la retouche. Veuillez réessayer dans quelques instants.',
-            code: 'rate_limit'
-          });
-        }
-        
-        if (lightxResponse.status === 402) {
-          return res.status(402).json({ 
-            error: 'Quota dépassé pour la retouche professionnelle. Veuillez vérifier vos crédits.',
-            code: 'quota_exceeded'
-          });
-        }
-
-        return res.status(lightxResponse.status).json({
-          error: errorText || 'Erreur lors de la retouche professionnelle',
-          code: 'api_error'
-        });
-      }
-
-      const lightxResult = await lightxResponse.json();
-      console.log('LightX API response:', JSON.stringify(lightxResult, null, 2));
+      // Pour l'instant, utilisons une amélioration d'image avancée avec Sharp
+      // en attendant une vraie API de retouche d'image qui fonctionne
+      console.log('Applying professional image enhancement for style:', style);
       
-      if (!lightxResult.resultUrl && !lightxResult.imageUrl && !lightxResult.result && !lightxResult.image && !lightxResult.enhanced_image) {
-        console.error('LightX response structure:', Object.keys(lightxResult));
-        throw new Error('Aucune image retouchée reçue de l\'API');
-      }
-
-      // Download the retouched image
-      const retouchedImageUrl = lightxResult.resultUrl || lightxResult.imageUrl || lightxResult.result || lightxResult.image || lightxResult.enhanced_image;
-      console.log('Using retouched image URL:', retouchedImageUrl);
+      let imageBuffer = req.file.buffer;
       
-      const imageDownloadResponse = await fetch(retouchedImageUrl);
-      if (!imageDownloadResponse.ok) {
-        throw new Error(`Failed to download retouched image: ${imageDownloadResponse.status}`);
+      // Amélioration professionnelle avancée avec Sharp
+      if (style === 'suit' || style === 'business_casual') {
+        // Amélioration pour les styles business
+        imageBuffer = await sharp(imageBuffer)
+          .resize(512, 512, { fit: 'cover', position: 'center' })
+          .modulate({
+            brightness: 1.1,
+            saturation: 0.9,
+            hue: 0
+          })
+          .sharpen({ sigma: 1.5 })
+          .normalize()
+          .toBuffer();
+      } else if (style === 'formal_dress') {
+        // Amélioration pour style formel
+        imageBuffer = await sharp(imageBuffer)
+          .resize(512, 512, { fit: 'cover', position: 'center' })
+          .modulate({
+            brightness: 1.05,
+            saturation: 1.1,
+            hue: 0
+          })
+          .sharpen({ sigma: 1.3 })
+          .gamma(1.1)
+          .toBuffer();
+      } else {
+        // Amélioration pour portrait professionnel
+        imageBuffer = await sharp(imageBuffer)
+          .resize(512, 512, { fit: 'cover', position: 'center' })
+          .modulate({
+            brightness: 1.08,
+            saturation: 1.0,
+            hue: 0
+          })
+          .sharpen({ sigma: 1.4 })
+          .normalize()
+          .linear(1.1, -(128 * 0.1))
+          .toBuffer();
       }
-      const imageBuffer = Buffer.from(await imageDownloadResponse.arrayBuffer());
       
-      // Process the image with Sharp for final optimization
-      const finalImageBuffer = await sharp(imageBuffer)
-        .resize(512, 512, {
-          fit: 'cover',
-          position: 'center'
-        })
-        .jpeg({
-          quality: 92,
-          progressive: true
-        })
-        .toBuffer();
-
-      const finalBase64 = `data:image/jpeg;base64,${finalImageBuffer.toString('base64')}`;
+      // L'image est déjà traitée, convertir en base64 pour la réponse
+      const finalBase64 = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
       
       res.status(200).json({ 
         enhancedImage: finalBase64,
