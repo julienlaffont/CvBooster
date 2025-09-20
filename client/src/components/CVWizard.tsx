@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
-import { ArrowLeft, ArrowRight, User, Briefcase, GraduationCap, Wrench, Award, Sparkles, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, Briefcase, GraduationCap, Wrench, Award, Sparkles, CheckCircle, Download, Camera, FileText } from "lucide-react";
+import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCreateCv, useCv, useUpdateCv } from "@/lib/api";
 import { useUpgradeModal } from "@/hooks/useUpgradeModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { CVPreview } from "@/components/CVPreview";
 
 interface PersonalInfo {
   firstName: string;
@@ -102,6 +104,7 @@ export default function CVWizard() {
   const { data: existingCv, isLoading: cvLoading } = useCv(cvId || "");
   const { toast } = useToast();
   const { isOpen, upgradeType, showUpgradeModal, closeModal } = useUpgradeModal();
+  const cvPreviewRef = useRef<HTMLDivElement>(null);
 
   // Load existing CV data in edit mode
   useEffect(() => {
@@ -276,6 +279,45 @@ export default function CVWizard() {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const exportToImage = async () => {
+    if (!cvPreviewRef.current) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de capturer l'image du CV",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(cvPreviewRef.current, {
+        scale: 2, // High quality
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: 794, // A4 width in pixels at 96 DPI
+        height: 1123, // A4 height in pixels at 96 DPI
+      });
+
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `CV_${cvData.personalInfo.firstName}_${cvData.personalInfo.lastName}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      toast({
+        title: "Image exportée",
+        description: "Votre CV a été téléchargé en image",
+      });
+    } catch (error) {
+      console.error('Error exporting to image:', error);
+      toast({
+        title: "Erreur d'export",
+        description: "Impossible d'exporter l'image",
+        variant: "destructive"
+      });
     }
   };
 
@@ -866,34 +908,93 @@ export default function CVWizard() {
           </p>
         </div>
 
-        <Card>
+        {/* Beautiful CV Preview */}
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
-              CV Généré
+              Aperçu de votre CV
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
-              <pre className="whitespace-pre-wrap text-sm">{generatedCV}</pre>
+          <CardContent className="p-0">
+            <div className="bg-gray-100 p-4 flex justify-center">
+              <div className="max-w-4xl w-full overflow-hidden rounded-lg shadow-2xl">
+                <CVPreview 
+                  ref={cvPreviewRef}
+                  cvData={{
+                    personalInfo: cvData.personalInfo,
+                    sector: cvData.sector,
+                    targetPosition: cvData.targetPosition,
+                    experiences: cvData.experiences.map(exp => ({
+                      position: exp.position,
+                      company: exp.company,
+                      duration: `${exp.startDate} - ${exp.current ? 'Présent' : exp.endDate}`,
+                      description: exp.description
+                    })),
+                    education: cvData.education.map(edu => ({
+                      degree: edu.degree,
+                      school: edu.institution,
+                      year: `${edu.startDate} - ${edu.current ? 'Présent' : edu.endDate}`,
+                      description: edu.field
+                    })),
+                    skills: cvData.skills,
+                    languages: cvData.languages,
+                    certifications: cvData.certifications
+                  }}
+                  generatedContent={generatedCV}
+                />
+              </div>
             </div>
-            <div className="flex gap-3 mt-6 justify-center">
-              <Button
-                onClick={saveCv}
-                disabled={createCv.isPending}
-                className="gap-2"
-                data-testid="button-save-cv"
-              >
-                <CheckCircle className="h-4 w-4" />
-                {createCv.isPending ? "Sauvegarde..." : "Sauvegarder le CV"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep(1)}
-                data-testid="button-restart-wizard"
-              >
-                Créer un autre CV
-              </Button>
+            
+            {/* Action Buttons */}
+            <div className="p-6 space-y-4">
+              <div className="flex flex-wrap gap-3 justify-center">
+                <Button
+                  onClick={saveCv}
+                  disabled={createCv.isPending || updateCv.isPending}
+                  className="gap-2"
+                  data-testid="button-save-cv"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  {(createCv.isPending || updateCv.isPending) ? "Sauvegarde..." : (isEditMode ? "Mettre à jour le CV" : "Sauvegarder le CV")}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={exportToImage}
+                  className="gap-2"
+                  data-testid="button-export-image"
+                >
+                  <Camera className="h-4 w-4" />
+                  Télécharger en PNG
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Sauvegardez d'abord",
+                      description: "Veuillez sauvegarder votre CV pour pouvoir l'exporter en PDF",
+                      variant: "default"
+                    });
+                  }}
+                  className="gap-2"
+                  data-testid="button-export-pdf"
+                >
+                  <FileText className="h-4 w-4" />
+                  Télécharger en PDF
+                </Button>
+              </div>
+              
+              <div className="flex justify-center">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentStep(1)}
+                  data-testid="button-restart-wizard"
+                >
+                  Créer un autre CV
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
