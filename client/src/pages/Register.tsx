@@ -51,8 +51,17 @@ export default function Register() {
       // Invalidate auth cache
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
 
-      // Redirect to pricing page
-      setLocation('/subscribe');
+      // Check for redirect parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get('redirect');
+      const plan = urlParams.get('plan');
+      
+      if (redirect === 'subscribe' && plan) {
+        setLocation(`/subscribe?plan=${plan}`);
+      } else {
+        // Default to starter plan selection after registration
+        setLocation('/subscribe?plan=starter');
+      }
     } catch (error: any) {
       toast({
         title: 'Erreur',
@@ -149,7 +158,7 @@ export default function Register() {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Vous avez déjà un compte ?{' '}
-                <Link to="/login" data-testid="link-login">
+                <Link to={`/login${window.location.search || ''}`} data-testid="link-login">
                   <Button variant="ghost" className="p-0 h-auto">
                     Se connecter
                   </Button>

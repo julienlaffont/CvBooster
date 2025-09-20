@@ -432,7 +432,7 @@ export default function Subscribe() {
             description: "Veuillez vous connecter pour souscrire à un abonnement",
             variant: "destructive",
           });
-          setLocation('/wizard?redirect=subscribe&plan=' + planParam);
+          setLocation('/login?redirect=subscribe&plan=' + planParam);
           return;
         }
         

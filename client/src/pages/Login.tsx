@@ -49,8 +49,16 @@ export default function Login() {
       // Invalidate auth cache
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
 
-      // Redirect to dashboard
-      setLocation('/dashboard');
+      // Check for redirect parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get('redirect');
+      const plan = urlParams.get('plan');
+      
+      if (redirect === 'subscribe' && plan) {
+        setLocation(`/subscribe?plan=${plan}`);
+      } else {
+        setLocation('/dashboard');
+      }
     } catch (error: any) {
       toast({
         title: 'Erreur de connexion',
@@ -144,7 +152,7 @@ export default function Login() {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Vous n'avez pas encore de compte ?{' '}
-                <Link to="/register" data-testid="link-register">
+                <Link to={`/register${window.location.search || ''}`} data-testid="link-register">
                   <Button variant="ghost" className="p-0 h-auto">
                     Créer un compte
                   </Button>
