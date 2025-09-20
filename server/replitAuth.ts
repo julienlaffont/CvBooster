@@ -64,6 +64,7 @@ async function upsertUser(
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    authProvider: "google", // Set provider for Replit Auth/Google OAuth
   });
 }
 
@@ -103,6 +104,12 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    // Store redirect and plan in session for post-login handling
+    if (req.query.redirect && req.query.plan) {
+      (req.session as any).postLoginRedirect = req.query.redirect as string;
+      (req.session as any).postLoginPlan = req.query.plan as string;
+    }
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -110,9 +117,41 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    passport.authenticate(`replitauth:${req.hostname}`, (err: any, user: any) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.redirect("/api/login");
+      }
+      
+      // Log the user in
+      req.logIn(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        
+        // Check for stored redirect params
+        const session = req.session as any;
+        const redirect = session.postLoginRedirect;
+        const plan = session.postLoginPlan;
+        
+        // Clean up session data
+        delete session.postLoginRedirect;
+        delete session.postLoginPlan;
+        
+        // Redirect based on stored parameters
+        if (redirect === 'subscribe' && plan) {
+          // Validate plan to prevent open redirect
+          const validPlans = ['starter', 'pro', 'expert'];
+          if (validPlans.includes(plan)) {
+            return res.redirect(`/subscribe?plan=${plan}`);
+          }
+        }
+        
+        // Default redirect to dashboard or home
+        return res.redirect("/dashboard");
+      });
     })(req, res, next);
   });
 

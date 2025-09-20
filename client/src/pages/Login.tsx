@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Link, useLocation } from 'wouter';
 import { ArrowLeft, Mail, Lock } from 'lucide-react';
+import { SiGoogle } from 'react-icons/si';
 
 const loginSchema = z.object({
   email: z.string().email('Email non valide'),
@@ -20,6 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -70,6 +72,14 @@ export default function Login() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    setIsGoogleLoading(true);
+    // Get current URL parameters to preserve plan and redirect info
+    const currentParams = window.location.search;
+    // Redirect to Replit Auth Google login
+    window.location.href = `/api/login${currentParams}`;
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
@@ -89,7 +99,42 @@ export default function Login() {
               Connectez-vous pour accéder à vos CV et lettres de motivation
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            {/* Google OAuth Button */}
+            <Button 
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading || isLoading}
+              variant="outline"
+              className="w-full"
+              size="lg"
+              data-testid="button-google-login"
+            >
+              {isGoogleLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                  Connexion en cours...
+                </div>
+              ) : (
+                <>
+                  <SiGoogle className="h-5 w-5 mr-2" />
+                  Se connecter avec Google
+                </>
+              )}
+            </Button>
+
+            {/* Separator */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Ou continuez avec votre email
+                </span>
+              </div>
+            </div>
+
+            {/* Email/Password Form */}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
