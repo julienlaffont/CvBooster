@@ -5,6 +5,10 @@ import {
   coverLetters,
   conversations,
   messages,
+  affiliates,
+  affiliateClicks,
+  affiliateReferrals,
+  affiliateCommissions,
   type User,
   type UpsertUser,
   type Cv,
@@ -18,6 +22,14 @@ import {
   type CreateConversation,
   type Message,
   type InsertMessage,
+  type Affiliate,
+  type InsertAffiliate,
+  type AffiliateClick,
+  type InsertAffiliateClick,
+  type AffiliateReferral,
+  type InsertAffiliateReferral,
+  type AffiliateCommission,
+  type InsertAffiliateCommission,
   type SubscriptionPlan,
   type SubscriptionStatus,
 } from "@shared/schema";
@@ -68,6 +80,25 @@ export interface IStorage {
   // Message operations
   getConversationMessages(conversationId: string, userId: string): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
+  
+  // Affiliate operations
+  createAffiliate(affiliate: InsertAffiliate & { affiliateCode: string }): Promise<Affiliate>;
+  getAffiliateByUserId(userId: string): Promise<Affiliate | undefined>;
+  getAffiliateByCode(code: string): Promise<Affiliate | undefined>;
+  incrementAffiliateClicks(affiliateId: string): Promise<void>;
+  
+  // Affiliate click operations
+  createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick>;
+  getAffiliateClicks(affiliateId: string): Promise<AffiliateClick[]>;
+  
+  // Affiliate referral operations
+  createAffiliateReferral(referral: InsertAffiliateReferral): Promise<AffiliateReferral>;
+  getAffiliateReferrals(affiliateId: string): Promise<AffiliateReferral[]>;
+  validateAffiliateReferral(referralId: string): Promise<AffiliateReferral>;
+  
+  // Affiliate commission operations
+  createAffiliateCommission(commission: InsertAffiliateCommission): Promise<AffiliateCommission>;
+  getAffiliateCommissions(affiliateId: string): Promise<AffiliateCommission[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -449,6 +480,120 @@ export class DatabaseStorage implements IStorage {
       freeCvsGenerated: user.freeCvsGenerated || 0,
       freeCoverLettersGenerated: user.freeCoverLettersGenerated || 0
     };
+  }
+
+  // ================================================================================
+  // AFFILIATE OPERATIONS
+  // ================================================================================
+
+  async createAffiliate(affiliate: InsertAffiliate & { affiliateCode: string }): Promise<Affiliate> {
+    const [newAffiliate] = await db.insert(affiliates).values(affiliate).returning();
+    return newAffiliate;
+  }
+
+  async getAffiliateByUserId(userId: string): Promise<Affiliate | undefined> {
+    const results = await db
+      .select()
+      .from(affiliates)
+      .where(eq(affiliates.userId, userId))
+      .limit(1);
+    
+    return results[0];
+  }
+
+  async getAffiliateByCode(code: string): Promise<Affiliate | undefined> {
+    const results = await db
+      .select()
+      .from(affiliates)
+      .where(eq(affiliates.affiliateCode, code))
+      .limit(1);
+    
+    return results[0];
+  }
+
+  async incrementAffiliateClicks(affiliateId: string): Promise<void> {
+    await db
+      .update(affiliates)
+      .set({ 
+        totalClicks: sql`${affiliates.totalClicks} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(affiliates.id, affiliateId));
+  }
+
+  // Affiliate click operations
+  async createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick> {
+    const [newClick] = await db.insert(affiliateClicks).values(click).returning();
+    return newClick;
+  }
+
+  async getAffiliateClicks(affiliateId: string): Promise<AffiliateClick[]> {
+    return await db
+      .select()
+      .from(affiliateClicks)
+      .where(eq(affiliateClicks.affiliateId, affiliateId))
+      .orderBy(desc(affiliateClicks.clickedAt));
+  }
+
+  // Affiliate referral operations
+  async createAffiliateReferral(referral: InsertAffiliateReferral): Promise<AffiliateReferral> {
+    const [newReferral] = await db.insert(affiliateReferrals).values(referral).returning();
+    
+    // Update affiliate stats
+    await db
+      .update(affiliates)
+      .set({ 
+        totalReferrals: sql`${affiliates.totalReferrals} + 1`,
+        updatedAt: new Date() 
+      })
+      .where(eq(affiliates.id, referral.affiliateId));
+    
+    return newReferral;
+  }
+
+  async getAffiliateReferrals(affiliateId: string): Promise<AffiliateReferral[]> {
+    return await db
+      .select()
+      .from(affiliateReferrals)
+      .where(eq(affiliateReferrals.affiliateId, affiliateId))
+      .orderBy(desc(affiliateReferrals.referredAt));
+  }
+
+  async validateAffiliateReferral(referralId: string): Promise<AffiliateReferral> {
+    const [updatedReferral] = await db
+      .update(affiliateReferrals)
+      .set({ 
+        status: 'validated',
+        validatedAt: new Date()
+      })
+      .where(eq(affiliateReferrals.id, referralId))
+      .returning();
+    
+    return updatedReferral;
+  }
+
+  // Affiliate commission operations
+  async createAffiliateCommission(commission: InsertAffiliateCommission): Promise<AffiliateCommission> {
+    const [newCommission] = await db.insert(affiliateCommissions).values(commission).returning();
+    
+    // Update affiliate total commissions
+    await db
+      .update(affiliates)
+      .set({ 
+        totalCommissions: sql`${affiliates.totalCommissions} + ${commission.amount}`,
+        updatedAt: new Date() 
+      })
+      .where(eq(affiliates.id, commission.affiliateId));
+    
+    return newCommission;
+  }
+
+  async getAffiliateCommissions(affiliateId: string): Promise<AffiliateCommission[]> {
+    return await db
+      .select()
+      .from(affiliateCommissions)
+      .where(eq(affiliateCommissions.affiliateId, affiliateId))
+      .orderBy(desc(affiliateCommissions.createdAt));
   }
 }
 

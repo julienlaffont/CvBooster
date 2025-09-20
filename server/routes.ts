@@ -13,7 +13,11 @@ import {
   insertConversationSchema,
   insertMessageSchema,
   updateCvSchema,
-  updateCoverLetterSchema 
+  updateCoverLetterSchema,
+  insertAffiliateSchema,
+  insertAffiliateClickSchema,
+  insertAffiliateReferralSchema,
+  insertAffiliateCommissionSchema
 } from "@shared/schema";
 import mammoth from "mammoth";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
@@ -2769,6 +2773,174 @@ Sois personnalisé, constructif et motivant.`;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    }
+  });
+
+  // ================================================================================
+  // AFFILIATE SYSTEM ROUTES
+  // ================================================================================
+
+  // Helper function to generate unique affiliate codes
+  function generateAffiliateCode(userId: string): string {
+    const hash = crypto.createHash('sha256').update(userId + Date.now().toString()).digest('hex');
+    return hash.substring(0, 8).toUpperCase();
+  }
+
+  // Join affiliate program
+  app.post('/api/affiliate/join', isAuthenticatedExtended, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Check if user is already an affiliate
+      const existingAffiliate = await storage.getAffiliateByUserId(userId);
+      if (existingAffiliate) {
+        return res.status(400).json({ error: 'You are already part of the affiliate program' });
+      }
+
+      // Create affiliate record
+      const affiliateCode = generateAffiliateCode(userId);
+      const affiliate = await storage.createAffiliate({
+        userId,
+        affiliateCode,
+        commissionRate: 20, // Default 20%
+        status: 'active'
+      });
+
+      res.json({ 
+        message: 'Successfully joined affiliate program',
+        affiliate: {
+          id: affiliate.id,
+          affiliateCode: affiliate.affiliateCode,
+          commissionRate: affiliate.commissionRate,
+          status: affiliate.status
+        }
+      });
+    } catch (error) {
+      console.error('Error joining affiliate program:', error);
+      res.status(500).json({ error: 'Failed to join affiliate program' });
+    }
+  });
+
+  // Get affiliate dashboard data
+  app.get('/api/affiliate/dashboard', isAuthenticatedExtended, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const affiliate = await storage.getAffiliateByUserId(userId);
+      if (!affiliate) {
+        return res.status(404).json({ error: 'Not an affiliate member' });
+      }
+
+      // Get statistics
+      const [clicks, referrals, commissions] = await Promise.all([
+        storage.getAffiliateClicks(affiliate.id),
+        storage.getAffiliateReferrals(affiliate.id),
+        storage.getAffiliateCommissions(affiliate.id)
+      ]);
+
+      // Calculate stats
+      const totalClicks = clicks.length;
+      const totalReferrals = referrals.length;
+      const paidReferrals = referrals.filter(r => r.status === 'validated').length;
+      const pendingCommissions = commissions
+        .filter(c => c.status === 'pending')
+        .reduce((sum, c) => sum + c.amount, 0);
+      const validatedCommissions = commissions
+        .filter(c => c.status === 'validated')
+        .reduce((sum, c) => sum + c.amount, 0);
+      const paidCommissions = commissions
+        .filter(c => c.status === 'paid')
+        .reduce((sum, c) => sum + c.amount, 0);
+
+      // Generate affiliate link
+      const baseUrl = req.get('host')?.includes('localhost') 
+        ? `http://${req.get('host')}`
+        : `https://${req.get('host')}`;
+      const affiliateLink = `${baseUrl}?ref=${affiliate.affiliateCode}`;
+
+      res.json({
+        affiliate: {
+          id: affiliate.id,
+          affiliateCode: affiliate.affiliateCode,
+          commissionRate: affiliate.commissionRate,
+          status: affiliate.status,
+          affiliateLink
+        },
+        stats: {
+          totalClicks,
+          totalReferrals,
+          paidReferrals,
+          conversionRate: totalClicks > 0 ? Math.round((totalReferrals / totalClicks) * 100) : 0,
+          pendingCommissions: Math.round(pendingCommissions / 100), // Convert cents to euros
+          validatedCommissions: Math.round(validatedCommissions / 100),
+          paidCommissions: Math.round(paidCommissions / 100),
+          totalEarnings: Math.round((validatedCommissions + paidCommissions) / 100)
+        },
+        recentReferrals: referrals.slice(0, 10).map(r => ({
+          id: r.id,
+          subscriptionPlan: r.subscriptionPlan,
+          subscriptionAmount: Math.round((r.subscriptionAmount || 0) / 100),
+          commissionAmount: Math.round((r.commissionAmount || 0) / 100),
+          status: r.status,
+          referredAt: r.referredAt
+        }))
+      });
+    } catch (error) {
+      console.error('Error fetching affiliate dashboard:', error);
+      res.status(500).json({ error: 'Failed to fetch affiliate dashboard' });
+    }
+  });
+
+  // Track affiliate link click
+  app.post('/api/affiliate/track-click', async (req: any, res) => {
+    try {
+      const { ref } = req.body;
+      
+      if (!ref) {
+        return res.status(400).json({ error: 'Missing affiliate code' });
+      }
+
+      const affiliate = await storage.getAffiliateByCode(ref);
+      if (!affiliate) {
+        return res.status(404).json({ error: 'Invalid affiliate code' });
+      }
+
+      // Track the click
+      await storage.createAffiliateClick({
+        affiliateId: affiliate.id,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || null,
+        referrer: req.get('referer') || null
+      });
+
+      // Update affiliate stats
+      await storage.incrementAffiliateClicks(affiliate.id);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking affiliate click:', error);
+      res.status(500).json({ error: 'Failed to track click' });
+    }
+  });
+
+  // Get affiliate by code (for checking if valid)
+  app.get('/api/affiliate/code/:code', async (req: any, res) => {
+    try {
+      const { code } = req.params;
+      
+      const affiliate = await storage.getAffiliateByCode(code);
+      if (!affiliate) {
+        return res.status(404).json({ error: 'Invalid affiliate code' });
+      }
+
+      res.json({ 
+        valid: true,
+        affiliateCode: affiliate.affiliateCode,
+        commissionRate: affiliate.commissionRate 
+      });
+    } catch (error) {
+      console.error('Error checking affiliate code:', error);
+      res.status(500).json({ error: 'Failed to check affiliate code' });
     }
   });
 
