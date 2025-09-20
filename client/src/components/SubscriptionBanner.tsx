@@ -140,7 +140,7 @@ export function SubscriptionBanner({ feature, showUpgradeButton = true, compact 
           </div>
           {showUpgradeButton && (
             <div className="flex gap-2">
-              <Link href="/#pricing">
+              <Link href="/pricing">
                 <Button size="sm" variant="default">
                   Passer au Premium
                 </Button>
