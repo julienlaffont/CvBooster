@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "wouter";
 import { ArrowLeft, ArrowRight, User, Briefcase, GraduationCap, Wrench, Award, Sparkles, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ProgressLoader } from "@/components/ui/progress-loader";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateCv } from "@/lib/api";
+import { useCreateCv, useCv, useUpdateCv } from "@/lib/api";
 import { useUpgradeModal } from "@/hooks/useUpgradeModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
 
@@ -69,9 +70,14 @@ const SECTORS = [
 ];
 
 export default function CVWizard() {
+  const params = useParams();
+  const cvId = params.id; // Get CV ID from URL if in edit mode
+  const isEditMode = !!cvId;
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCV, setGeneratedCV] = useState<string | null>(null);
+  const [isLoadingCV, setIsLoadingCV] = useState(isEditMode);
   const [cvData, setCvData] = useState<CVWizardData>({
     personalInfo: {
       firstName: "",
@@ -92,11 +98,45 @@ export default function CVWizard() {
   });
 
   const createCv = useCreateCv();
+  const updateCv = useUpdateCv();
+  const { data: existingCv, isLoading: cvLoading } = useCv(cvId || "");
   const { toast } = useToast();
   const { isOpen, upgradeType, showUpgradeModal, closeModal } = useUpgradeModal();
 
+  // Load existing CV data in edit mode
+  useEffect(() => {
+    if (isEditMode && existingCv && !cvLoading) {
+      try {
+        // Parse the CV content to extract data
+        const content = existingCv.content;
+        
+        // Initialize with basic data from CV record
+        setCvData(prev => ({
+          ...prev,
+          sector: existingCv.sector || "",
+          targetPosition: existingCv.position || ""
+        }));
+        
+        // If we have the generated CV content, we can parse it to extract more details
+        // For now, we'll set basic info and let user complete the wizard
+        setGeneratedCV(content);
+        setCurrentStep(6); // Go to final step to show the CV
+        setIsLoadingCV(false);
+      } catch (error) {
+        console.error('Error loading CV data:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les données du CV",
+          variant: "destructive"
+        });
+        setIsLoadingCV(false);
+      }
+    }
+  }, [existingCv, cvLoading, isEditMode, toast]);
+
   const totalSteps = 6;
   const progress = (currentStep / totalSteps) * 100;
+
 
   const addExperience = () => {
     setCvData(prev => ({
@@ -245,18 +285,29 @@ export default function CVWizard() {
     try {
       const cvTitle = `CV - ${cvData.personalInfo.firstName} ${cvData.personalInfo.lastName} - ${cvData.targetPosition}`;
       
-      await createCv.mutateAsync({
+      const cvDataToSave = {
         title: cvTitle,
         content: generatedCV,
         sector: cvData.sector,
         position: cvData.targetPosition,
         status: 'draft'
-      });
+      };
 
-      toast({
-        title: "CV sauvegardé",
-        description: "Votre CV a été ajouté à vos documents",
-      });
+      if (isEditMode && cvId) {
+        // Update existing CV
+        await updateCv.mutateAsync({ id: cvId, data: cvDataToSave });
+        toast({
+          title: "CV mis à jour",
+          description: "Votre CV a été mis à jour avec succès",
+        });
+      } else {
+        // Create new CV
+        await createCv.mutateAsync(cvDataToSave);
+        toast({
+          title: "CV sauvegardé",
+          description: "Votre CV a été ajouté à vos documents",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Erreur de sauvegarde",

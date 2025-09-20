@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,7 @@ export function Dashboard() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeModalType, setUpgradeModalType] = useState<'cv' | 'cover-letter' | 'feature'>('feature');
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   
   // API calls
@@ -114,8 +116,14 @@ export function Dashboard() {
             toast({ title: "Lettre supprimée", description: "La lettre a été supprimée avec succès" });
           }
           break;
-        case 'view':
         case 'edit':
+          if (docType === 'CV') {
+            navigate(`/cvs/${docId}/edit`);
+          } else {
+            toast({ title: "À venir", description: "Édition de lettres de motivation en cours de développement" });
+          }
+          break;
+        case 'view':
         case 'download':
           // TODO: Implement these actions
           toast({ title: "À venir", description: `Fonction ${action} en cours de développement` });
