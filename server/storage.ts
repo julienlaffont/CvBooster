@@ -31,6 +31,15 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfileImage(userId: string, imageUrl: string): Promise<User>;
   
+  // Email/password authentication operations
+  findUserByEmail(email: string): Promise<User | undefined>;
+  setUserPassword(userId: string, passwordHash: string): Promise<User>;
+  setEmailVerification(userId: string, token: string | null, verifiedAt: Date | null): Promise<User>;
+  setPasswordReset(userId: string, tokenHash: string, expires: Date): Promise<User>;
+  getUserByVerificationToken(token: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
+  createEmailUser(email: string, passwordHash: string): Promise<User>;
+  
   // Stripe operations
   updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId?: string): Promise<User>;
   updateUserSubscriptionPlan(userId: string, plan: SubscriptionPlan, status: SubscriptionStatus): Promise<User>;
@@ -131,6 +140,88 @@ export class DatabaseStorage implements IStorage {
     if (!user) {
       throw new Error('User not found');
     }
+    return user;
+  }
+
+  // Email/password authentication operations
+  async findUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async setUserPassword(userId: string, passwordHash: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        passwordHash,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async setEmailVerification(userId: string, token: string | null, verifiedAt: Date | null): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        emailVerificationToken: token,
+        emailVerifiedAt: verifiedAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async setPasswordReset(userId: string, tokenHash: string, expires: Date): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        passwordResetToken: tokenHash,
+        passwordResetExpires: expires,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async getUserByVerificationToken(token: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.emailVerificationToken, token));
+    return user;
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.passwordResetToken, token));
+    return user;
+  }
+
+  async createEmailUser(email: string, passwordHash: string): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        email,
+        passwordHash,
+        subscriptionPlan: 'debutant',
+        subscriptionStatus: 'inactive',
+      })
+      .returning();
     return user;
   }
 

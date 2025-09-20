@@ -28,7 +28,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table - required for Replit Auth
+// User storage table - supports both Replit Auth and email/password auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -37,6 +37,12 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   freeCvsGenerated: integer("free_cvs_generated").default(0),
   freeCoverLettersGenerated: integer("free_cover_letters_generated").default(0),
+  // Email/password authentication fields
+  passwordHash: varchar("password_hash"),
+  emailVerifiedAt: timestamp("email_verified_at"),
+  emailVerificationToken: varchar("email_verification_token"),
+  passwordResetToken: varchar("password_reset_token"),
+  passwordResetExpires: timestamp("password_reset_expires"),
   // Stripe integration fields
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
