@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Rocket, ArrowLeft } from "lucide-react";
+import { Check, Crown, Rocket, ArrowLeft, Star } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 // Initialize Stripe conditionally to avoid crashes
@@ -25,6 +25,10 @@ const initializeStripe = () => {
 interface SubscribeFormProps {
   plan: 'pro' | 'expert';
   clientSecret: string;
+}
+
+interface FreeActivationProps {
+  plan: 'starter';
 }
 
 const SubscribeForm = ({ plan, clientSecret }: SubscribeFormProps) => {
@@ -68,6 +72,19 @@ const SubscribeForm = ({ plan, clientSecret }: SubscribeFormProps) => {
   };
 
   const planDetails = {
+    starter: {
+      name: "Débutant",
+      price: "Gratuit",
+      icon: Star,
+      features: [
+        "1 CV par mois",
+        "3 lettres de motivation",
+        "Templates de base",
+        "Export PDF standard",
+        "Chat IA limité",
+        "Support communautaire"
+      ]
+    },
     pro: {
       name: "Pro",
       price: "20€",
@@ -203,9 +220,170 @@ const SubscribeForm = ({ plan, clientSecret }: SubscribeFormProps) => {
   );
 };
 
+const FreeActivation = ({ plan }: FreeActivationProps) => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [, setLocation] = useLocation();
+
+  const handleActivate = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('POST', '/api/subscription/activate-free');
+      
+      if (response.status === 401 || response.status === 403) {
+        toast({
+          title: "Authentification requise",
+          description: "Veuillez vous connecter pour activer votre plan gratuit",
+          variant: "destructive",
+        });
+        setLocation('/login?redirect=subscribe&plan=starter');
+        return;
+      }
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erreur lors de l\'activation du plan gratuit');
+      }
+
+      const result = await response.json();
+      toast({
+        title: "Plan activé !",
+        description: "Votre plan Débutant gratuit est maintenant actif. Bienvenue sur CVBooster !",
+      });
+
+      // Redirect to dashboard after activation
+      setLocation('/dashboard');
+    } catch (error: any) {
+      toast({
+        title: "Erreur d'activation",
+        description: error.message || "Impossible d'activer le plan gratuit",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const planDetails = {
+    starter: {
+      name: "Débutant",
+      price: "Gratuit",
+      icon: Star,
+      features: [
+        "1 CV par mois",
+        "3 lettres de motivation",
+        "Templates de base",
+        "Export PDF standard",
+        "Chat IA limité",
+        "Support communautaire"
+      ]
+    }
+  };
+
+  const currentPlan = planDetails[plan];
+
+  return (
+    <div className="min-h-screen bg-muted/30 py-12">
+      <div className="container mx-auto max-w-4xl px-4">
+        <div className="mb-8">
+          <Button variant="ghost" asChild data-testid="button-back-to-pricing">
+            <Link href="/#pricing">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour aux tarifs
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Plan Summary */}
+          <Card>
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <currentPlan.icon className="h-6 w-6" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl">Plan {currentPlan.name}</CardTitle>
+              <div className="text-3xl font-bold text-primary">
+                {currentPlan.price}
+              </div>
+              <Badge className="bg-green-600 text-white">
+                Plan gratuit à vie
+              </Badge>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {currentPlan.features.map((feature, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>• Aucune carte de crédit requise</p>
+                  <p>• Activation immédiate</p>
+                  <p>• Mise à niveau possible à tout moment</p>
+                  <p>• Accès complet aux fonctionnalités de base</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Activation Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Activer votre plan gratuit</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Commencez dès maintenant avec CVBooster
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="text-center p-6 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <Star className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Prêt à commencer ?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Activez votre plan Débutant gratuit et créez votre premier CV professionnel dès maintenant.
+                </p>
+              </div>
+              
+              <Button 
+                onClick={handleActivate}
+                disabled={isLoading}
+                className="w-full"
+                size="lg"
+                data-testid="button-activate-free"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    Activation en cours...
+                  </div>
+                ) : (
+                  'Activer mon plan gratuit'
+                )}
+              </Button>
+
+              <div className="text-xs text-center text-muted-foreground">
+                En activant votre plan gratuit, vous acceptez nos conditions d'utilisation
+                et notre politique de confidentialité. Vous pourrez mettre à niveau votre plan
+                à tout moment depuis votre tableau de bord.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState("");
-  const [plan, setPlan] = useState<'pro' | 'expert'>('pro');
+  const [plan, setPlan] = useState<'starter' | 'pro' | 'expert'>('pro');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -216,7 +394,7 @@ export default function Subscribe() {
     const urlParams = new URLSearchParams(window.location.search);
     const planParam = urlParams.get('plan');
     
-    if (planParam === 'pro' || planParam === 'expert') {
+    if (planParam === 'starter' || planParam === 'pro' || planParam === 'expert') {
       setPlan(planParam);
     } else {
       toast({
@@ -225,6 +403,12 @@ export default function Subscribe() {
         variant: "destructive",
       });
       window.location.href = '/#pricing';
+      return;
+    }
+
+    // If it's the starter plan, no Stripe setup needed
+    if (planParam === 'starter') {
+      setIsLoading(false);
       return;
     }
 
@@ -301,6 +485,11 @@ export default function Subscribe() {
         </Card>
       </div>
     );
+  }
+
+  // For starter plan, render the free activation component
+  if (plan === 'starter') {
+    return <FreeActivation plan={plan} />;
   }
 
   if (!clientSecret) {
