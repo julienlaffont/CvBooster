@@ -10,6 +10,8 @@ import ChatPage from "@/pages/ChatPage";
 import PhotoEnhancementPage from "@/pages/PhotoEnhancementPage";
 import CVWizardPage from "@/pages/CVWizardPage";
 import CoverLetterGeneratorPage from "@/pages/CoverLetterGeneratorPage";
+import Subscribe from "@/pages/Subscribe";
+import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
 import NotFound from "@/pages/not-found";
 
 // Feature pages
@@ -54,6 +56,10 @@ function Router() {
       <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
       <Route path="/photo" component={PhotoEnhancementPage} />
       <Route path="/chat" component={ChatPage} />
+      
+      {/* Subscription routes */}
+      <Route path="/subscribe" component={Subscribe} />
+      <Route path="/subscription/success" component={SubscriptionSuccess} />
       
       {/* Protected routes for authenticated users only */}
       {isAuthenticated && (

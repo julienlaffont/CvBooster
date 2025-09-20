@@ -120,7 +120,11 @@ export function Pricing() {
                   asChild
                   data-testid={`button-select-${plan.name.toLowerCase()}`}
                 >
-                  <Link href={isAuthenticated ? "/dashboard" : "/wizard"}>
+                  <Link href={
+                    plan.name === 'Débutant' 
+                      ? (isAuthenticated ? "/dashboard" : "/wizard")
+                      : `/subscribe?plan=${plan.name.toLowerCase()}`
+                  }>
                     {plan.cta}
                   </Link>
                 </Button>
@@ -277,7 +281,7 @@ export function Pricing() {
                     asChild
                     data-testid="table-cta-pro"
                   >
-                    <Link href={isAuthenticated ? "/dashboard" : "/wizard"}>
+                    <Link href="/subscribe?plan=pro">
                       Choisir Pro
                     </Link>
                   </Button>
@@ -289,7 +293,7 @@ export function Pricing() {
                     asChild
                     data-testid="table-cta-expert"
                   >
-                    <Link href={isAuthenticated ? "/dashboard" : "/wizard"}>
+                    <Link href="/subscribe?plan=expert">
                       Choisir Expert
                     </Link>
                   </Button>
