@@ -47,25 +47,57 @@ const SubscribeForm = ({ plan, clientSecret }: SubscribeFormProps) => {
 
     setIsLoading(true);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/subscription/success?plan=${plan}`,
-      },
-    });
+    try {
+      // First, confirm the setup intent to collect payment method
+      const { error: setupError, setupIntent } = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/subscription/success?plan=${plan}`,
+        },
+        redirect: 'if_required',
+      });
 
-    if (error) {
+      if (setupError) {
+        toast({
+          title: "Erreur de configuration",
+          description: setupError.message,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // If setup intent succeeded, create the subscription
+      if (setupIntent && setupIntent.status === 'succeeded') {
+        // Get the stored priceId from sessionStorage
+        const priceId = sessionStorage.getItem('subscriptionPriceId');
+        if (!priceId) {
+          throw new Error('Price ID not found. Please try again.');
+        }
+
+        const response = await apiRequest('POST', '/api/subscription/confirm', {
+          setupIntentId: setupIntent.id,
+          plan,
+          priceId
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create subscription');
+        }
+
+        toast({
+          title: "Abonnement activé",
+          description: "Votre abonnement a été activé avec succès !",
+        });
+        setLocation('/subscription/success');
+      }
+    } catch (error: any) {
       toast({
-        title: "Échec du paiement",
-        description: error.message,
+        title: "Erreur d'abonnement",
+        description: error.message || "Une erreur s'est produite lors de l'activation de votre abonnement",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Paiement réussi",
-        description: "Votre abonnement a été activé avec succès !",
-      });
-      setLocation('/subscription/success');
     }
 
     setIsLoading(false);
@@ -439,6 +471,8 @@ export default function Subscribe() {
         if (response.ok) {
           const data = await response.json();
           setClientSecret(data.clientSecret);
+          // Store the priceId from the response for later use
+          sessionStorage.setItem('subscriptionPriceId', data.priceId);
         } else {
           const error = await response.json();
           throw new Error(error.error || 'Failed to create subscription');

@@ -2521,13 +2521,58 @@ Sois personnalisé, constructif et motivant.`;
         });
       }
       
-      // Create subscription with stable price ID
-      const subscription = await stripe.subscriptions.create({
+      // Create a setup intent to collect payment method first
+      const setupIntent = await stripe.setupIntents.create({
         customer: customerId,
+        payment_method_types: ['card'],
+        usage: 'off_session',
+        metadata: {
+          plan: plan,
+          userId: userId,
+          priceId: priceId
+        }
+      });
+      
+      res.json({
+        clientSecret: setupIntent.client_secret,
+        customerId: customerId,
+        plan,
+        priceId,
+        amount: plan === 'pro' ? 2000 : 5000,
+      });
+    } catch (error: any) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({ error: 'Failed to create subscription', details: error.message });
+    }
+  });
+
+  // Confirm subscription after setup intent is complete
+  app.post('/api/subscription/confirm', isAuthenticatedExtended, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { setupIntentId, plan, priceId } = req.body;
+      
+      if (!setupIntentId || !plan || !priceId) {
+        return res.status(400).json({ error: 'Setup Intent ID, plan, and price ID are required' });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user || !user.stripeCustomerId) {
+        return res.status(404).json({ error: 'User or Stripe customer not found' });
+      }
+      
+      // Retrieve the setup intent to get the payment method
+      const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+      
+      if (setupIntent.status !== 'succeeded') {
+        return res.status(400).json({ error: 'Setup Intent not completed' });
+      }
+      
+      // Create the subscription using the payment method from setup intent
+      const subscription = await stripe.subscriptions.create({
+        customer: user.stripeCustomerId,
         items: [{ price: priceId }],
-        payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['latest_invoice.payment_intent'],
+        default_payment_method: setupIntent.payment_method as string,
         metadata: {
           plan: plan,
           userId: userId
@@ -2535,26 +2580,18 @@ Sois personnalisé, constructif et motivant.`;
       });
       
       // Update user with subscription info
-      await storage.updateUserStripeInfo(userId, customerId, subscription.id);
-      await storage.updateUserSubscriptionPlan(userId, plan as any, 'inactive'); // Will be updated to active via webhook
-      
-      // Get client secret from expanded payment intent
-      const latestInvoice: any = subscription.latest_invoice;
-      const paymentIntent: any = latestInvoice?.payment_intent;
-      
-      if (!paymentIntent || !paymentIntent.client_secret) {
-        return res.status(500).json({ error: 'Failed to create payment intent for subscription' });
-      }
+      await storage.updateUserStripeInfo(userId, user.stripeCustomerId, subscription.id);
+      await storage.updateUserSubscriptionPlan(userId, plan as any, subscription.status === 'active' ? 'active' : 'inactive');
       
       res.json({
         subscriptionId: subscription.id,
-        clientSecret: paymentIntent.client_secret,
-        plan,
-        amount: plan === 'pro' ? 2000 : 5000,
+        status: subscription.status,
+        plan
       });
+      
     } catch (error: any) {
-      console.error('Error creating subscription:', error);
-      res.status(500).json({ error: 'Failed to create subscription', details: error.message });
+      console.error('Error confirming subscription:', error);
+      res.status(500).json({ error: 'Failed to confirm subscription', details: error.message });
     }
   });
 
