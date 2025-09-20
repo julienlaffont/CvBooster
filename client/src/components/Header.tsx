@@ -102,9 +102,9 @@ export function Header() {
           <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-pricing">
             Tarifs
           </Link>
-          <a href="/#testimonials" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-testimonials">
+          <Link href="/testimonials" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-testimonials">
             Témoignages
-          </a>
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
