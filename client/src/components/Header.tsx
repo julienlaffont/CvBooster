@@ -36,7 +36,7 @@ export function Header() {
           <Logo data-testid="link-home" className="hover:opacity-80 transition-opacity" />
         </Link>
         
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-8 ml-8">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="dropdown-features">
               Fonctionnalités
