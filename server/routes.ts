@@ -21,6 +21,9 @@ import { jsPDF } from "jspdf";
 import sharp from "sharp";
 import OpenAI from "openai";
 import Stripe from "stripe";
+import argon2 from "argon2";
+import rateLimit from "express-rate-limit";
+import crypto from "crypto";
 
 // Note: pdf-parse is dynamically imported in extractTextFromFile function
 
@@ -30,6 +33,15 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-08-27.basil",
+});
+
+// Rate limiting for authentication routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: { error: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Simple cache for demo responses to improve performance
@@ -145,12 +157,191 @@ function validateBody(schema: z.ZodSchema) {
   };
 }
 
+// Extended authentication middleware that supports both Replit Auth and email/password sessions
+function isAuthenticatedExtended(req: any, res: any, next: any) {
+  // Check if user is authenticated via Replit Auth
+  if (req.user && req.user.claims && req.user.claims.sub) {
+    return next();
+  }
+  
+  // Check if user is authenticated via email/password session
+  if (req.session && req.session.userId) {
+    // Create a normalized user object for compatibility
+    req.user = {
+      claims: {
+        sub: req.session.userId
+      }
+    };
+    return next();
+  }
+  
+  // If neither authentication method worked, return unauthorized
+  return res.status(401).json({ message: 'Unauthorized' });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Email/password authentication schemas
+  const registerSchema = z.object({
+    email: z.string().email('Email non valide'),
+    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre')
+  });
+
+  const loginSchema = z.object({
+    email: z.string().email('Email non valide'),
+    password: z.string().min(1, 'Mot de passe requis')
+  });
+
+  // Auth routes - Email/Password Registration
+  app.post('/api/auth/register', authLimiter, async (req: any, res) => {
+    try {
+      const { email, password } = registerSchema.parse(req.body);
+      
+      // Normalize email to lowercase
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      // Check if user already exists
+      const existingUser = await storage.findUserByEmail(normalizedEmail);
+      if (existingUser && existingUser.passwordHash) {
+        // Return generic error to prevent account enumeration
+        return res.status(400).json({ error: 'Cette adresse email ne peut pas être utilisée' });
+      }
+      
+      // Hash password
+      const passwordHash = await argon2.hash(password);
+      
+      let user;
+      if (existingUser && !existingUser.passwordHash) {
+        // User exists from Replit Auth but no password, add password
+        user = await storage.setUserPassword(existingUser.id, passwordHash);
+      } else {
+        // Create new user
+        user = await storage.createEmailUser(normalizedEmail, passwordHash);
+      }
+      
+      // Generate email verification token and hash it
+      const verificationToken = crypto.randomBytes(32).toString('base64url');
+      const tokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+      await storage.setEmailVerification(user.id, tokenHash, null);
+      
+      // Regenerate session ID to prevent fixation
+      req.session.regenerate((err: any) => {
+        if (err) {
+          console.error('Session regeneration error:', err);
+          return res.status(500).json({ error: 'Erreur de session' });
+        }
+        
+        // Create session (login immediately)
+        req.session.userId = user.id;
+        
+        const response: any = { 
+          message: 'Compte créé avec succès',
+          user: { id: user.id, email: user.email }
+        };
+        
+        // Only include verification URL in development
+        if (process.env.NODE_ENV !== 'production') {
+          response.verificationUrl = `/api/auth/verify?token=${verificationToken}`;
+        }
+        
+        res.status(201).json(response);
+      });
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      if (error.errors) {
+        return res.status(400).json({ error: error.errors[0]?.message || 'Données invalides' });
+      }
+      res.status(500).json({ error: 'Erreur lors de la création du compte' });
+    }
+  });
+
+  // Auth routes - Email/Password Login
+  app.post('/api/auth/login', authLimiter, async (req: any, res) => {
+    try {
+      const { email, password } = loginSchema.parse(req.body);
+      
+      // Normalize email to lowercase
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      // Find user by email
+      const user = await storage.findUserByEmail(normalizedEmail);
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+      }
+      
+      // Verify password
+      const passwordValid = await argon2.verify(user.passwordHash, password);
+      if (!passwordValid) {
+        return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+      }
+      
+      // Regenerate session ID to prevent fixation
+      req.session.regenerate((err: any) => {
+        if (err) {
+          console.error('Session regeneration error:', err);
+          return res.status(500).json({ error: 'Erreur de session' });
+        }
+        
+        // Create session
+        req.session.userId = user.id;
+        
+        res.json({ 
+          message: 'Connexion réussie',
+          user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName }
+        });
+      });
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.errors) {
+        return res.status(400).json({ error: error.errors[0]?.message || 'Données invalides' });
+      }
+      res.status(500).json({ error: 'Erreur lors de la connexion' });
+    }
+  });
+
+  // Auth routes - Logout
+  app.post('/api/auth/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({ error: 'Erreur lors de la déconnexion' });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: 'Déconnexion réussie' });
+    });
+  });
+
+  // Auth routes - Email Verification
+  app.get('/api/auth/verify', async (req: any, res) => {
+    try {
+      const { token } = req.query;
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ error: 'Token de vérification requis' });
+      }
+      
+      // Hash the provided token to match stored hash
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const user = await storage.getUserByVerificationToken(tokenHash);
+      if (!user) {
+        return res.status(400).json({ error: 'Token de vérification invalide ou expiré' });
+      }
+      
+      // Mark email as verified and clear token
+      await storage.setEmailVerification(user.id, null, new Date());
+      
+      // Redirect to subscribe page with success message
+      res.redirect('/subscribe?verified=true');
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ error: 'Erreur lors de la vérification de l\'email' });
+    }
+  });
+
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -162,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // File Upload Routes
-  app.post('/api/upload/cv', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/upload/cv', isAuthenticatedExtended, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'Aucun fichier uploadé' });
@@ -194,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/upload/cover-letter', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/upload/cover-letter', isAuthenticatedExtended, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'Aucun fichier uploadé' });
@@ -228,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CV Routes
-  app.get('/api/cvs', isAuthenticated, async (req: any, res) => {
+  app.get('/api/cvs', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const userCvs = await storage.getUserCvs(userId);
@@ -253,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/cvs', isAuthenticated, validateBody(insertCvSchema), async (req: any, res) => {
+  app.post('/api/cvs', isAuthenticatedExtended, validateBody(insertCvSchema), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const cvData = { ...req.validatedBody, userId };
@@ -2247,8 +2438,27 @@ Sois personnalisé, constructif et motivant.`;
 
   // Stripe Subscription Routes
 
+  // Activate free plan for new users
+  app.post('/api/subscription/activate-free', isAuthenticatedExtended, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Update user to have active debutant plan
+      const user = await storage.updateUserSubscriptionPlan(userId, 'debutant', 'active');
+      
+      res.json({ 
+        message: 'Plan gratuit activé avec succès',
+        plan: 'debutant',
+        status: 'active'
+      });
+    } catch (error) {
+      console.error('Error activating free plan:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'activation du plan gratuit' });
+    }
+  });
+
   // Get user subscription status
-  app.get('/api/subscription/status', isAuthenticated, async (req: any, res) => {
+  app.get('/api/subscription/status', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const subscriptionInfo = await storage.getUserSubscriptionInfo(userId);
@@ -2265,7 +2475,7 @@ Sois personnalisé, constructif et motivant.`;
   });
 
   // Create subscription for Pro or Expert plan
-  app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
+  app.post('/api/subscription/create', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { plan } = req.body;
@@ -2465,16 +2675,26 @@ Sois personnalisé, constructif et motivant.`;
   });
 
   // User Usage Route for subscription limits
-  app.get('/api/user/usage', isAuthenticated, async (req: any, res) => {
+  app.get('/api/user/usage', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const usageInfo = await storage.getUserFreeTrialStatus(userId);
       
+      if (!usageInfo) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Calculate remaining generations for free plan (max 3 CVs, 2 cover letters)
+      const cvGenerationsCount = usageInfo.freeCvsGenerated;
+      const coverLetterGenerationsCount = usageInfo.freeCoverLettersGenerated;
+      const canGenerateCV = cvGenerationsCount < 3;
+      const canGenerateCoverLetter = coverLetterGenerationsCount < 2;
+      
       res.json({
-        cvGenerationsCount: usageInfo.cvGenerationsCount,
-        coverLetterGenerationsCount: usageInfo.coverLetterGenerationsCount,
-        canGenerateCV: usageInfo.canGenerateFreeCv,
-        canGenerateCoverLetter: usageInfo.canGenerateFreeCoverLetter
+        cvGenerationsCount,
+        coverLetterGenerationsCount,
+        canGenerateCV,
+        canGenerateCoverLetter
       });
     } catch (error) {
       console.error('Error fetching user usage:', error);
@@ -2483,7 +2703,7 @@ Sois personnalisé, constructif et motivant.`;
   });
 
   // Dashboard Stats Route
-  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/stats', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const [cvs, coverLetters, conversations] = await Promise.all([

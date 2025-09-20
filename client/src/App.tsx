@@ -12,6 +12,8 @@ import CVWizardPage from "@/pages/CVWizardPage";
 import CoverLetterGeneratorPage from "@/pages/CoverLetterGeneratorPage";
 import Subscribe from "@/pages/Subscribe";
 import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
+import Register from "@/pages/Register";
+import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
 // Feature pages
@@ -56,6 +58,10 @@ function Router() {
       <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
       <Route path="/photo" component={PhotoEnhancementPage} />
       <Route path="/chat" component={ChatPage} />
+      
+      {/* Authentication routes */}
+      <Route path="/register" component={Register} />
+      <Route path="/login" component={Login} />
       
       {/* Subscription routes */}
       <Route path="/subscribe" component={Subscribe} />
