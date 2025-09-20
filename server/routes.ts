@@ -2301,14 +2301,21 @@ Sois personnalisé, constructif et motivant.`;
       }
 
       const lightxResult = await lightxResponse.json();
+      console.log('LightX API response:', JSON.stringify(lightxResult, null, 2));
       
-      if (!lightxResult.resultUrl && !lightxResult.imageUrl) {
+      if (!lightxResult.resultUrl && !lightxResult.imageUrl && !lightxResult.result && !lightxResult.image && !lightxResult.enhanced_image) {
+        console.error('LightX response structure:', Object.keys(lightxResult));
         throw new Error('Aucune image retouchée reçue de l\'API');
       }
 
       // Download the retouched image
-      const retouchedImageUrl = lightxResult.resultUrl || lightxResult.imageUrl;
+      const retouchedImageUrl = lightxResult.resultUrl || lightxResult.imageUrl || lightxResult.result || lightxResult.image || lightxResult.enhanced_image;
+      console.log('Using retouched image URL:', retouchedImageUrl);
+      
       const imageDownloadResponse = await fetch(retouchedImageUrl);
+      if (!imageDownloadResponse.ok) {
+        throw new Error(`Failed to download retouched image: ${imageDownloadResponse.status}`);
+      }
       const imageBuffer = Buffer.from(await imageDownloadResponse.arrayBuffer());
       
       // Process the image with Sharp for final optimization
