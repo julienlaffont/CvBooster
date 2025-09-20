@@ -265,8 +265,12 @@ export function Dashboard() {
       }
     }
     
-    // TODO: Implement document creation
-    toast({ title: "À venir", description: `Création de ${type} en cours de développement` });
+    // Navigate to creation pages
+    if (type === "CV") {
+      navigate('/cv-wizard');
+    } else if (type === "Lettre") {
+      navigate('/cover-letter');
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
