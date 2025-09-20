@@ -105,6 +105,9 @@ export function Header() {
           <Link href="/testimonials" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-testimonials">
             Témoignages
           </Link>
+          <Link href="/affiliate" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-affiliate">
+            Programme Partenaire
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -142,6 +145,11 @@ export function Header() {
               <Link href="/cover-letter">
                 <Button variant="ghost" data-testid="button-cover-letter">
                   Lettre IA
+                </Button>
+              </Link>
+              <Link href="/affiliate/dashboard">
+                <Button variant="ghost" data-testid="button-affiliate-dashboard">
+                  Affiliation
                 </Button>
               </Link>
               

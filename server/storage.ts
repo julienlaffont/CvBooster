@@ -57,6 +57,7 @@ export interface IStorage {
   updateUserSubscriptionPlan(userId: string, plan: SubscriptionPlan, status: SubscriptionStatus): Promise<User>;
   clearUserSubscription(userId: string): Promise<User>;
   getUserSubscriptionInfo(userId: string): Promise<{ subscriptionPlan: SubscriptionPlan; subscriptionStatus: SubscriptionStatus; stripeCustomerId?: string; stripeSubscriptionId?: string } | null>;
+  getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined>;
   
   // CV operations
   getUserCvs(userId: string): Promise<Cv[]>;
@@ -320,6 +321,16 @@ export class DatabaseStorage implements IStorage {
       stripeCustomerId: user.stripeCustomerId || undefined,
       stripeSubscriptionId: user.stripeSubscriptionId || undefined
     };
+  }
+
+  async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
+    const results = await db
+      .select()
+      .from(users)
+      .where(eq(users.stripeCustomerId, stripeCustomerId))
+      .limit(1);
+    
+    return results[0];
   }
 
   // CV operations

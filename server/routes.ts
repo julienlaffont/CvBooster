@@ -2482,7 +2482,7 @@ Sois personnalisé, constructif et motivant.`;
   app.post('/api/subscription/create', isAuthenticatedExtended, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { plan } = req.body;
+      const { plan, affiliateRef } = req.body;
       
       if (!plan || !['pro', 'expert'].includes(plan)) {
         return res.status(400).json({ error: 'Invalid plan. Must be "pro" or "expert"' });
@@ -2501,13 +2501,29 @@ Sois personnalisé, constructif et motivant.`;
       
       // Create Stripe customer if doesn't exist
       if (!customerId) {
-        const customer = await stripe.customers.create({
+        const customerData: any = {
           email: user.email,
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
-        });
+        };
+
+        // Add affiliate reference to customer metadata if provided
+        if (affiliateRef) {
+          customerData.metadata = {
+            affiliate_ref: affiliateRef
+          };
+        }
+
+        const customer = await stripe.customers.create(customerData);
         
         customerId = customer.id;
         await storage.updateUserStripeInfo(userId, customerId);
+      } else if (affiliateRef) {
+        // Update existing customer with affiliate metadata
+        await stripe.customers.update(customerId, {
+          metadata: {
+            affiliate_ref: affiliateRef
+          }
+        });
       }
       
       // Use stable price IDs for Pro and Expert plans
@@ -2685,13 +2701,73 @@ Sois personnalisé, constructif et motivant.`;
         case 'invoice.payment_succeeded':
           const invoice = event.data.object as any;
           if (invoice.subscription) {
-            // Update subscription status to active
-            const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-            const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
-            
-            // Find user by Stripe customer ID
-            // Note: We need a way to find user by stripeCustomerId - let's add this method
-            // For now, we'll skip this update and handle it in the frontend after successful payment
+            try {
+              // Update subscription status to active
+              const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+              const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
+              
+              // Find user by Stripe customer ID
+              const user = await storage.getUserByStripeCustomerId(customer.id);
+              if (user) {
+                // Update user subscription status
+                const planMapping: { [key: string]: SubscriptionPlan } = {
+                  'price_pro': 'pro' as SubscriptionPlan,
+                  'price_expert': 'expert' as SubscriptionPlan
+                };
+                
+                const priceId = subscription.items.data[0]?.price.id || '';
+                const subscriptionPlan = planMapping[priceId] || 'pro' as SubscriptionPlan;
+                
+                await storage.updateUserSubscriptionPlan(user.id, subscriptionPlan, 'active');
+                
+                // Check for affiliate referral and process commissions
+                const affiliateRefCode = customer.metadata?.affiliate_ref;
+                if (affiliateRefCode) {
+                  const affiliate = await storage.getAffiliateByCode(affiliateRefCode);
+                  if (affiliate) {
+                    // Prevent self-referral fraud
+                    if (affiliate.userId !== user.id) {
+                      // Get subscription amount and calculate commission
+                      const subscriptionAmount = subscription.items.data[0]?.price.unit_amount || 0; // Amount in cents
+                      const commissionRate = affiliate.commissionRate || 20;
+                      const commissionAmount = Math.floor((subscriptionAmount * commissionRate) / 100);
+                      
+                      try {
+                        // Create referral record
+                        const referral = await storage.createAffiliateReferral({
+                          affiliateId: affiliate.id,
+                          referredUserId: user.id,
+                          subscriptionPlan: subscriptionPlan,
+                          subscriptionAmount: subscriptionAmount,
+                          commissionAmount: commissionAmount,
+                          status: 'validated' // Mark as validated since payment succeeded
+                        });
+                        
+                        // Create commission record
+                        await storage.createAffiliateCommission({
+                          affiliateId: affiliate.id,
+                          referralId: referral.id,
+                          amount: commissionAmount,
+                          status: 'validated' // Will be paid in next cycle
+                        });
+                        
+                        console.log(`Commission processed: ${commissionAmount/100}€ for affiliate ${affiliate.affiliateCode} from user ${user.id}`);
+                      } catch (commissionError) {
+                        console.error('Error processing affiliate commission:', commissionError);
+                      }
+                    } else {
+                      console.log(`Self-referral attempt blocked for user ${user.id} with code ${affiliateRefCode}`);
+                    }
+                  } else {
+                    console.log(`Affiliate code ${affiliateRefCode} not found`);
+                  }
+                }
+                
+                console.log(`Subscription activated for user ${user.id}: ${subscriptionPlan} plan`);
+              }
+            } catch (error) {
+              console.error('Error processing invoice.payment_succeeded:', error);
+            }
           }
           break;
           

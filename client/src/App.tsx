@@ -16,6 +16,8 @@ import Register from "@/pages/Register";
 import Login from "@/pages/Login";
 import PricingPage from "@/pages/PricingPage";
 import TestimonialsPage from "@/pages/TestimonialsPage";
+import AffiliatePage from "@/pages/AffiliatePage";
+import AffiliateDashboard from "@/pages/AffiliateDashboard";
 import NotFound from "@/pages/not-found";
 
 // Feature pages
@@ -57,6 +59,7 @@ function Router() {
       {/* Routes accessible to all users */}
       <Route path="/pricing" component={PricingPage} />
       <Route path="/testimonials" component={TestimonialsPage} />
+      <Route path="/affiliate" component={AffiliatePage} />
       <Route path="/wizard" component={CVWizardPage} />
       <Route path="/cv-wizard" component={CVWizardPage} />
       <Route path="/cover-letter" component={CoverLetterGeneratorPage} />
@@ -75,6 +78,7 @@ function Router() {
       {isAuthenticated && (
         <>
           <Route path="/dashboard" component={DashboardPage} />
+          <Route path="/affiliate/dashboard" component={AffiliateDashboard} />
         </>
       )}
       <Route component={NotFound} />
