@@ -1,4 +1,4 @@
-import { SiLinkedin, SiIndeed, SiGlassdoor, SiGithub, SiGoogle, SiMicrosoft } from "react-icons/si";
+import { SiLinkedin, SiIndeed, SiGlassdoor, SiGithub, SiGoogle } from "react-icons/si";
 
 type PartnerItem = {
   name: string;
@@ -12,7 +12,7 @@ const partners: PartnerItem[] = [
   { name: "Glassdoor", Icon: SiGlassdoor, colorClass: "text-[#0CAA41]" },
   { name: "GitHub", Icon: SiGithub, colorClass: "text-[#24292e] dark:text-white" },
   { name: "Google", Icon: SiGoogle, colorClass: "text-[#4285F4]" },
-  { name: "Microsoft", Icon: SiMicrosoft, colorClass: "text-[#5E5E5E]" },
+  { name: "Microsoft", Icon: SiGoogle, colorClass: "text-[#5E5E5E]" },
 ];
 
 export function PartnerMarquee() {
