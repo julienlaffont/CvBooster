@@ -3,6 +3,9 @@ import { Hero } from "@/components/Hero";
 import { TrustedBy } from "@/components/TrustedBy";
 import { CVExamples } from "@/components/CVExamples";
 import { Features } from "@/components/Features";
+import { Showcase } from "@/components/Showcase";
+import { HowItWorks } from "@/components/HowItWorks";
+import { PartnerMarquee } from "@/components/PartnerMarquee";
 import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { FAQ } from "@/components/FAQ";
@@ -45,6 +48,9 @@ export default function Home() {
       <main>
         <Hero />
         <TrustedBy />
+        <Showcase />
+        <HowItWorks />
+        <PartnerMarquee />
         <CVExamples />
         <Features />
         <Testimonials />
