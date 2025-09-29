@@ -23,67 +23,72 @@ export function Logo({ className, showText = true, size = "md" }: LogoProps) {
     <div className={cn("flex items-center gap-2", className)}>
       <div className={cn("relative", sizeClasses[size])}>
         <svg
-          viewBox="0 0 32 32"
+          viewBox="0 0 64 64"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
         >
-          {/* Background with subtle gradient effect */}
+          {/* CV Symbol with C and V (arrow) */}
+          <g transform="translate(16, 8)">
+            {/* Letter C */}
+            <path
+              d="M8 4C8 1.79086 9.79086 0 12 0C14.2091 0 16 1.79086 16 4V8C16 10.2091 14.2091 12 12 12C9.79086 12 8 10.2091 8 8V4Z"
+              fill="white"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M8 4C8 1.79086 9.79086 0 12 0"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <path
+              d="M8 8C8 10.2091 9.79086 12 12 12"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            
+            {/* Letter V (arrow pointing up and right) */}
+            <g transform="translate(18, 0)">
+              {/* Arrow body */}
+              <path
+                d="M0 8L8 0L12 4L8 8L0 8Z"
+                fill="white"
+                fillOpacity="0.9"
+              />
+              {/* Arrow head with gradient effect */}
+              <path
+                d="M8 0L16 8L12 8L8 4L8 0Z"
+                fill="url(#arrowGradient)"
+              />
+              {/* Arrow tip */}
+              <path
+                d="M12 8L16 8L14 10L12 8Z"
+                fill="white"
+                fillOpacity="0.7"
+              />
+            </g>
+          </g>
+          
+          {/* Gradient definition for arrow */}
           <defs>
-            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" className="stop-color-slate-800 dark:stop-color-slate-200" />
-              <stop offset="100%" className="stop-color-slate-900 dark:stop-color-slate-100" />
+            <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="white" />
+              <stop offset="100%" stopColor="#E5E7EB" />
             </linearGradient>
           </defs>
-          
-          {/* Main container - rounded square */}
-          <rect
-            x="2"
-            y="2"
-            width="28"
-            height="28"
-            rx="6"
-            fill="url(#logoGradient)"
-            className="drop-shadow-sm"
-          />
-          
-          {/* Document pages effect */}
-          <rect
-            x="7"
-            y="6"
-            width="14"
-            height="18"
-            rx="2"
-            fill="currentColor"
-            className="text-white dark:text-slate-900"
-          />
-          
-          {/* Second page behind for depth */}
-          <rect
-            x="8"
-            y="7"
-            width="14"
-            height="18"
-            rx="2"
-            fill="currentColor"
-            className="text-white/90 dark:text-slate-900/90"
-          />
-          
-          {/* CV text lines */}
-          <rect x="10" y="10" width="8" height="1.5" rx="0.5" className="fill-slate-600 dark:fill-slate-400" />
-          <rect x="10" y="13" width="10" height="1" rx="0.5" className="fill-slate-500 dark:fill-slate-500" />
-          <rect x="10" y="15.5" width="6" height="1" rx="0.5" className="fill-slate-500 dark:fill-slate-500" />
-          <rect x="10" y="18" width="9" height="1" rx="0.5" className="fill-slate-500 dark:fill-slate-500" />
-          <rect x="10" y="20.5" width="7" height="1" rx="0.5" className="fill-slate-500 dark:fill-slate-500" />
-          
-          {/* Modern accent line */}
-          <rect x="6" y="26" width="20" height="2" rx="1" className="fill-primary" />
         </svg>
       </div>
       
       {showText && (
-        <span className={cn("font-semibold", textSizeClasses[size])}>
-          CVBooster
+        <span className={cn("font-semibold text-blue-600", textSizeClasses[size])}>
+          cvbooster
         </span>
       )}
     </div>

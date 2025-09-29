@@ -1,110 +1,148 @@
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Star, ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
-import { Typewriter } from "@/components/Typewriter";
-import heroImg from "@assets/generated_images/Modern_professional_CV_template_74f056c7.png";
+import heroImg from "@assets/generated_images/Professional_Caucasian_man_executive_584fa5c3.png";
 
 export function Hero() {
   const [, setLocation] = useLocation();
   
-  const handleCVClick = () => {
+  const handleCTAClick = () => {
     setLocation("/wizard");
-  };
-  
-  const handleLetterClick = () => {
-    setLocation("/cover-letter");
   };
 
   return (
-    <section className="relative overflow-hidden py-24 md:py-32 px-4 bg-gradient-to-b from-background to-background/50">
-      {/* background orbs */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-purple-500/20 dark:bg-purple-400/20 blur-3xl" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-40 w-[36rem] bg-gradient-to-r from-primary/20 via-transparent to-fuchsia-400/10 blur-2xl" />
-      </div>
-
-      <div className="container mx-auto max-w-6xl">
-        <Badge variant="secondary" className="mb-4" data-testid="badge-new">
-          <Star className="w-3 h-3 mr-1" />
-          Essai gratuit: 1 CV + 1 lettre
-        </Badge>
-        
-        <div className="grid md:grid-cols-2 gap-10 lg:gap-14 items-center">
-          <div className="text-center md:text-left">
-            <h1 className="leading-tight font-extrabold mb-6 text-5xl md:text-6xl lg:text-7xl">
-              <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Crée ton CV parfait grâce à l'IA
-              </span>
-              <br />
-              <Typewriter
-                className="block mt-2 text-primary"
-                words={[
-                  "décroche plus d'entretiens",
-                  "mets tes atouts en valeur",
-                  "gagne du temps à chaque candidature",
-                ]}
-              />
-            </h1>
-            
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 md:mb-12 max-w-2xl md:max-w-none">
-              Utilise l'intelligence artificielle pour optimiser ton CV et tes lettres de motivation. 
-              Reçois des conseils personnalisés selon ton secteur et augmente tes chances de succès.
-              <br />
-              <span className="text-primary font-medium">Commence gratuitement dès maintenant !</span>
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 md:justify-start justify-center mb-10">
-              <Button 
-                size="lg" 
-                className="text-lg px-8" 
-                onClick={handleCVClick}
-                data-testid="button-cta-cv"
-              >
-                Essayer gratuitement
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="text-lg px-8"
-                onClick={handleLetterClick}
-                data-testid="button-cta-lettre"
-              >
-                Créer ma lettre gratuite
-              </Button>
+    <section className="relative min-h-screen bg-blue-600 flex items-center justify-center px-4">
+      {/* Background texture */}
+      <div 
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(255,255,255,.1) 10px,
+            rgba(255,255,255,.1) 20px
+          )`
+        }}
+      />
+      
+      {/* Main white card */}
+      <div className="relative w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden">
+        {/* Header section */}
+        <div className="px-8 py-6 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <span className="text-blue-600 font-semibold">Host</span>
+              <span className="text-gray-600 font-medium">careres</span>
+              <span className="text-gray-600 font-medium">Professional CV</span>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-xl md:max-w-none">
-              <div className="flex items-center gap-3" data-testid="feature-ai">
-                <CheckCircle className="text-primary h-5 w-5 flex-shrink-0" />
-                <span className="text-sm text-muted-foreground">Analyse IA avancée</span>
-              </div>
-              <div className="flex items-center gap-3" data-testid="feature-personalized">
-                <CheckCircle className="text-primary h-5 w-5 flex-shrink-0" />
-                <span className="text-sm text-muted-foreground">Conseils personnalisés</span>
-              </div>
-              <div className="flex items-center gap-3" data-testid="feature-export">
-                <CheckCircle className="text-primary h-5 w-5 flex-shrink-0" />
-                <span className="text-sm text-muted-foreground">Export PDF professionnel</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-primary/30 via-purple-500/20 to-fuchsia-400/20 blur-2xl -z-10" />
-            <div className="rounded-2xl overflow-hidden ring-1 ring-border/50 shadow-xl bg-white">
-              <img
-                src={heroImg}
-                alt="Aperçu d'un CV professionnel"
-                className="w-full h-auto object-cover"
-                loading="lazy"
-                decoding="async"
-              />
+            <div className="flex items-center gap-4">
+              <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="text-blue-600 font-medium">#0A74DA</span>
             </div>
           </div>
         </div>
+
+        {/* Hero content */}
+        <div className="px-8 py-12">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Text content */}
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                Booostet carers with professional CVs
+              </h1>
+              
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                Fontid yosty lonyfoe yetency tecinggsonenration; ande seost coobi eo foulbooing.
+              </p>
+              
+              <Button 
+                size="lg" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg rounded-full"
+                onClick={handleCTAClick}
+              >
+                Call-to Action
+              </Button>
+            </div>
+
+            {/* Right side - Hero image */}
+            <div className="relative">
+              <div className="relative rounded-2xl overflow-hidden">
+                <img
+                  src={heroImg}
+                  alt="Professional executive"
+                  className="w-full h-auto object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+                {/* Arrow indicator */}
+                <div className="absolute top-1/2 right-4 transform -translate-y-1/2">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg">
+                    <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature blocks */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
+            {/* CV Templates */}
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">CV Templates</h3>
+              <div className="flex justify-center gap-4">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-2"></div>
+                  <span className="text-sm text-gray-600">CV ternlaks</span>
+                </div>
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-2"></div>
+                  <span className="text-sm text-gray-600">Padden Featurs</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Applications */}
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Applications</h3>
+              <div className="bg-gray-100 rounded-lg p-4 h-24 flex items-center justify-center">
+                <span className="text-gray-500 text-sm">Tablet Interface</span>
+              </div>
+            </div>
+
+            {/* Applications (variant) */}
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Applicattions</h3>
+              <div className="bg-gray-100 rounded-lg p-4 h-24 flex items-center justify-center">
+                <span className="text-gray-500 text-sm">Laptop Interface</span>
+              </div>
+            </div>
+
+            {/* Testimonials */}
+            <div className="text-center">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Tortentatints</h3>
+              <div className="flex justify-center gap-2">
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center mt-16 pb-8">
+            <span className="text-gray-500 text-sm">Bokratinations</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Blue corner indicator */}
+      <div className="absolute top-8 right-8 text-white font-bold text-lg">
+        #64.169
       </div>
     </section>
   );

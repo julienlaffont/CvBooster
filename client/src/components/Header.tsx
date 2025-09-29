@@ -30,162 +30,31 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
+    <header className="sticky top-0 z-50 border-b bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/">
           <Logo data-testid="link-home" className="hover:opacity-80 transition-opacity" />
         </Link>
         
         <nav className="hidden md:flex items-center gap-8 ml-8">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="dropdown-features">
-              Fonctionnalités
-              <ChevronDown className="h-3 w-3" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-60">
-              <DropdownMenuItem asChild>
-                <Link href="/features/analyse-ia" className="flex items-center gap-2 w-full">
-                  <Brain className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="font-medium">Analyse IA</div>
-                    <div className="text-xs text-muted-foreground">Optimise ton CV avec l'IA</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/features/lettre-personnalisee" className="flex items-center gap-2 w-full">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="font-medium">Lettres Personnalisées</div>
-                    <div className="text-xs text-muted-foreground">Génère des lettres uniques</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/features/photo-ia" className="flex items-center gap-2 w-full">
-                  <Camera className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="font-medium">Photo Pro IA</div>
-                    <div className="text-xs text-muted-foreground">Améliore ta photo de profil</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/features/contexting-ia" className="flex items-center gap-2 w-full">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="font-medium">Coaching IA 24/7</div>
-                    <div className="text-xs text-muted-foreground">Assistant virtuel disponible</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/features/export-professionnel" className="flex items-center gap-2 w-full">
-                  <Download className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="font-medium">Export Professionnel</div>
-                    <div className="text-xs text-muted-foreground">PDF haute qualité</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/features/multisecteur" className="flex items-center gap-2 w-full">
-                  <Users className="h-4 w-4 text-primary" />
-                  <div>
-                    <div className="font-medium">Multi-secteurs</div>
-                    <div className="text-xs text-muted-foreground">Conseils pour tous les métiers</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-pricing">
-            Tarifs
+          <Link href="/" className="text-sm font-medium hover:text-blue-600 transition-colors cursor-pointer" data-testid="link-home-nav">
+            Host
           </Link>
-          <Link href="/testimonials" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-testimonials">
-            Témoignages
+          <Link href="/features" className="text-sm font-medium hover:text-blue-600 transition-colors cursor-pointer" data-testid="link-features">
+            Carriers
           </Link>
-          <Link href="/affiliate" className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" data-testid="link-affiliate">
-            Programme Partenaire
+          <Link href="/pricing" className="text-sm font-medium hover:text-blue-600 transition-colors cursor-pointer" data-testid="link-pricing">
+            Professional CV
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            data-testid="button-theme-toggle"
-          >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="text-gray-600">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </Button>
-          
-          {isAuthenticated ? (
-            <>
-              <Link href="/dashboard">
-                <Button variant="ghost" data-testid="button-dashboard">
-                  Dashboard
-                </Button>
-              </Link>
-              <Link href="/chat">
-                <Button variant="ghost" data-testid="button-chat">
-                  IA Coach
-                </Button>
-              </Link>
-              <Link href="/photo">
-                <Button variant="ghost" data-testid="button-photo">
-                  Photo Pro
-                </Button>
-              </Link>
-              <Link href="/wizard">
-                <Button variant="ghost" data-testid="button-wizard">
-                  Assistant CV
-                </Button>
-              </Link>
-              <Link href="/cover-letter">
-                <Button variant="ghost" data-testid="button-cover-letter">
-                  Lettre IA
-                </Button>
-              </Link>
-              <Link href="/affiliate/dashboard">
-                <Button variant="ghost" data-testid="button-affiliate-dashboard">
-                  Affiliation
-                </Button>
-              </Link>
-              
-              <div className="flex items-center gap-2 ml-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={(user as any)?.profileImageUrl || ""} />
-                  <AvatarFallback data-testid="avatar-fallback">
-                    {(user as any)?.firstName?.[0] || (user as any)?.email?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <Button
-                  variant="ghost"
-                  onClick={() => window.location.href = "/api/logout"}
-                  data-testid="button-logout"
-                >
-                  Déconnexion
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => window.location.href = "/api/login"}
-                data-testid="button-login"
-              >
-                Connexion
-              </Button>
-              <Button
-                onClick={() => window.location.href = "/api/login"}
-                data-testid="button-signup"
-              >
-                Essai gratuit
-              </Button>
-            </>
-          )}
+          <span className="text-sm text-blue-600 font-medium">#0A74DA</span>
         </div>
       </div>
     </header>
